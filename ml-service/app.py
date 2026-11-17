@@ -24,6 +24,14 @@ from chem.presets import PRESETS
 from chem.properties import COMPUTED, TARGETS
 from chem.scoring import score
 
+# Baca ml-service/.env sederhana (KUNCI=nilai) tanpa paket tambahan.
+_env = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+if os.path.exists(_env):
+    for _line in open(_env, encoding="utf-8"):
+        _k, _, _v = _line.strip().partition("=")
+        if _k and not _k.startswith("#") and _k not in os.environ:
+            os.environ[_k] = _v.strip()
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger("chemistry")
 
