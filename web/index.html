@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chemistry — Riset &amp; Validasi Molekul Aman</title>
+  <link rel="icon" type="image/png" href="/logo_chemistry.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    /* ================= CHEMISTRY LIGHT PALETTE (BLUE / CYAN / INDIGO) ================= */
+    :root {
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --primary-soft: rgba(2, 132, 199, 0.11);
+      --secondary: #0ea5e9;
+      --accent: #4f46e5;
+      --bg: #f4f8fc;
+      --bg-card: #ffffff;
+      --bg-soft: #eef4fa;
+      --bg-sidebar: #ffffff;
+      --bg-header: rgba(244, 248, 252, 0.86);
+      --text: #0f172a;
+      --text-muted: #475569;
+      --border: #dbe7f3;
+      --shadow-sm: 0 2px 10px rgba(2, 132, 199, 0.06);
+      --shadow-md: 0 12px 32px rgba(15, 23, 42, 0.08);
+      --hero-overlay: linear-gradient(180deg, rgba(8, 25, 48, 0.56) 0%, rgba(10, 32, 62, 0.80) 100%);
+    }
+
+    /* ================= CHEMISTRY DARK PALETTE (DEEP LAB COBALT / CYAN) ================= */
+    body.dark-mode {
+      --primary: #38bdf8;
+      --primary-hover: #7dd3fc;
+      --primary-soft: rgba(56, 189, 248, 0.15);
+      --secondary: #0ea5e9;
+      --accent: #818cf8;
+      --bg: #060b14;
+      --bg-card: #0d1525;
+      --bg-soft: #131e33;
+      --bg-sidebar: #0a101d;
+      --bg-header: rgba(6, 11, 20, 0.86);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #1e2e4a;
+      --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.45);
+      --shadow-md: 0 16px 38px rgba(0, 0, 0, 0.65);
+      --hero-overlay: linear-gradient(180deg, rgba(6, 11, 20, 0.62) 0%, rgba(6, 11, 20, 0.88) 100%);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "Inter", "Poppins", sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      transition: background-color 0.22s ease, color 0.22s ease;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+    /* ================= APP SHELL (LEFT SIDEBAR + MAIN CANVAS) ================= */
+    .app-shell { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0; width: 248px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: 1.25rem 1rem;
+      z-index: 1100;
+      transition: transform 0.25s ease;
+    }
+    .sidebar-logo {
+      display: flex; align-items: center; justify-content: center;
+      padding: 0.4rem 0 1.4rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1rem;
+      cursor: pointer;
+    }
+    .sidebar-logo img {
+      height: 54px; width: 54px; object-fit: contain; display: block;
+    }
+
+    .sidebar-nav { display: flex; flex-direction: column; gap: 0.35rem; flex: 1; }
+    .nav-btn {
+      width: 100%; display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.72rem 0.9rem; border-radius: 11px;
+      font-size: 0.9rem; font-weight: 600; color: var(--text-muted);
+      transition: all 0.18s; text-align: left;
+    }
+    .nav-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .nav-btn:hover { background: var(--primary-soft); color: var(--primary); }
+    .nav-btn.active { background: var(--primary); color: #ffffff; }
+    body.dark-mode .nav-btn.active { color: #060b14; }
+
+    .main-area {
+      flex: 1; margin-left: 248px; min-width: 0;
+      display: flex; flex-direction: column; min-height: 100vh;
+    }
+
+    /* TOP SLIM HEADER */
+    .topbar {
+      position: sticky; top: 0; z-index: 900;
+      height: 62px; padding: 0 4%;
+      background: var(--bg-header);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .mob-menu-btn {
+      display: none; width: 38px; height: 38px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--bg-card);
+      align-items: center; justify-content: center;
+    }
+    .topbar-right { display: flex; align-items: center; gap: 0.7rem; margin-left: auto; position: relative; }
+
+    .icon-btn {
+      width: 36px; height: 36px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--bg-card);
+      display: inline-flex; align-items: center; justify-content: center;
+      color: var(--text-muted); transition: 0.2s;
+    }
+    .icon-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+    /* Compact Profile Avatar Icon ONLY (NO ARROW!) */
+    .avatar-trigger {
+      width: 34px; height: 34px; border-radius: 50%;
+      border: 2px solid var(--border); background: var(--primary);
+      color: #ffffff; font-weight: 700; font-size: 0.85rem;
+      display: inline-flex; align-items: center; justify-content: center;
+      overflow: hidden; transition: border-color 0.2s;
+    }
+    body.dark-mode .avatar-trigger { color: #060b14; }
+    .avatar-trigger:hover { border-color: var(--primary); }
+    .avatar-trigger img { width: 100%; height: 100%; object-fit: cover; }
+
+    .dropdown-menu {
+      position: absolute; top: 46px; right: 0; width: 220px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 14px; box-shadow: var(--shadow-md);
+      padding: 0.45rem; display: none; z-index: 1200;
+    }
+    .dropdown-menu.open { display: block; }
+    .dropdown-header { padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--border); margin-bottom: 0.3rem; }
+    .dropdown-header strong { display: block; font-size: 0.88rem; }
+    .dropdown-header span { font-size: 0.74rem; color: var(--text-muted); }
+    .dropdown-item {
+      width: 100%; text-align: left; padding: 0.55rem 0.7rem;
+      border-radius: 9px; font-size: 0.85rem; font-weight: 500;
+      display: flex; align-items: center; gap: 0.55rem; color: var(--text);
+    }
+    .dropdown-item:hover { background: var(--primary-soft); color: var(--primary); }
+    .dropdown-item.danger { color: #ef4444; }
+    .dropdown-item.danger:hover { background: rgba(239, 68, 68, 0.12); }
+
+    .btn-primary {
+      background: var(--primary); color: #ffffff;
+      padding: 0.65rem 1.3rem; border-radius: 10px;
+      font-weight: 600; font-size: 0.9rem;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      transition: 0.2s; box-shadow: var(--shadow-sm);
+    }
+    body.dark-mode .btn-primary { color: #060b14; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-outline {
+      background: var(--bg-card); color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.65rem 1.3rem; border-radius: 10px;
+      font-weight: 600; font-size: 0.9rem;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      transition: 0.2s;
+    }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+
+    /* ================= VIEWS & SECTIONS ================= */
+    .view { display: none; flex: 1; }
+    .view.active { display: block; }
+    .container { max-width: 1180px; margin: 0 auto; padding: 0 4%; }
+
+    /* SECTION 1: HERO IMAGE BANNER (IMAGE 2) */
+    .hero-section {
+      position: relative; min-height: calc(100vh - 62px);
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 4.5rem 5%;
+      background-image: url('/hero_chemistry.jpg');
+      background-size: cover; background-position: center 30%;
+    }
+    .hero-overlay { position: absolute; inset: 0; background: var(--hero-overlay); z-index: 1; }
+    .hero-inner { position: relative; z-index: 2; max-width: 780px; color: #ffffff; }
+    .hero-title {
+      font-family: "Poppins", sans-serif;
+      font-size: clamp(2.4rem, 5vw, 4rem);
+      font-weight: 800; line-height: 1.14; margin-bottom: 1.15rem;
+      letter-spacing: -0.02em; text-shadow: 0 4px 22px rgba(0, 0, 0, 0.35);
+    }
+    .hero-subtitle {
+      font-size: 1.08rem; color: rgba(255, 255, 255, 0.92);
+      max-width: 650px; margin: 0 auto 2.1rem;
+    }
+    .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    /* SECTION 2: MERGED IMAGE 3 METRICS + MENGAPA CHEMISTRY? */
+    .section-two { padding: 4.5rem 0 5rem; background: var(--bg); }
+    .hero-stats-merged {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 2rem 1.75rem;
+      box-shadow: var(--shadow-md); max-width: 960px; margin: 0 auto 4rem;
+      text-align: center;
+    }
+    .hero-stat-val { font-size: 2rem; font-weight: 800; color: var(--primary); font-family: "Poppins", sans-serif; }
+    .hero-stat-lbl { font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-top: 0.25rem; }
+
+    .section-head { text-align: center; max-width: 660px; margin: 0 auto 3rem; }
+    .section-head h2 { font-family: "Poppins", sans-serif; font-size: clamp(1.8rem, 3.2vw, 2.5rem); font-weight: 800; margin-bottom: 0.7rem; }
+    .section-head h2 span { color: var(--primary); }
+    .section-head p { color: var(--text-muted); font-size: 1rem; }
+
+    .landing-section { padding: 4.5rem 0; background: var(--bg-soft); border-top: 1px solid var(--border); }
+
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.35rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 1.35rem; }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.35rem; }
+
+    .feature-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 18px; padding: 1.85rem; box-shadow: var(--shadow-sm);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .feature-card:hover { transform: translateY(-4px); border-color: var(--primary); }
+    .feature-icon {
+      width: 48px; height: 48px; border-radius: 13px;
+      background: var(--primary-soft); color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1.1rem;
+    }
+    .feature-card h3 { font-size: 1.12rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .feature-card p { color: var(--text-muted); font-size: 0.92rem; }
+
+    .step-card { text-align: center; padding: 1.25rem; }
+    .step-num {
+      width: 60px; height: 60px; margin: 0 auto 1rem;
+      border-radius: 50%; background: var(--bg-card);
+      border: 3px solid var(--primary); color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; font-weight: 800; box-shadow: var(--shadow-sm);
+    }
+    .step-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.35rem; }
+    .step-card p { font-size: 0.88rem; color: var(--text-muted); }
+
+    /* FOOTER WITH DOCS LINKS */
+    footer {
+      border-top: 1px solid var(--border); padding: 2rem 4%;
+      background: var(--bg-card); color: var(--text-muted); font-size: 0.88rem;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+      margin-top: auto;
+    }
+    .footer-links { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+    .footer-links button { color: var(--primary); font-weight: 600; font-size: 0.88rem; }
+    .footer-links button:hover { text-decoration: underline; }
+
+    /* ================= INTERNAL VIEWS & CARDS ================= */
+    .page-wrap { padding: 2rem 0 4rem; }
+    .page-header {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 1rem; margin-bottom: 1.75rem;
+    }
+    .page-header h1 { font-family: "Poppins", sans-serif; font-size: 1.75rem; font-weight: 800; }
+    .page-header h1 span { color: var(--primary); }
+    .page-header p { color: var(--text-muted); font-size: 0.94rem; }
+
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.4rem; box-shadow: var(--shadow-sm);
+    }
+    .stat-card { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+    .stat-label { font-size: 0.84rem; font-weight: 600; color: var(--text-muted); }
+    .stat-value { font-size: 1.9rem; font-weight: 800; margin-top: 0.3rem; font-family: "Poppins", sans-serif; }
+    .stat-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: var(--primary-soft); color: var(--primary);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .progress-track { width: 100%; height: 7px; background: var(--bg-soft); border-radius: 999px; margin-top: 0.8rem; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--primary); border-radius: 999px; }
+
+    .charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 1.35rem; margin-top: 1.35rem; }
+    .kpi-item {
+      display: flex; align-items: center; gap: 0.9rem; padding: 0.95rem;
+      background: var(--bg-soft); border: 1px solid var(--border); border-radius: 12px;
+    }
+    .kpi-item + .kpi-item { margin-top: 0.75rem; }
+
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.83rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-muted); }
+    .input, select, textarea {
+      width: 100%; padding: 0.68rem 0.9rem; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--bg-soft); color: var(--text);
+      font-family: inherit; font-size: 0.9rem;
+    }
+    .input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
+    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+    .tab-btn {
+      padding: 0.52rem 0.95rem; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--bg-soft); font-weight: 600; font-size: 0.85rem; color: var(--text-muted);
+    }
+    .tab-btn.active { background: var(--primary); color: #ffffff; border-color: var(--primary); }
+    body.dark-mode .tab-btn.active { color: #060b14; }
+
+    .chip {
+      display: inline-flex; padding: 0.25rem 0.65rem; border-radius: 999px;
+      font-size: 0.74rem; font-weight: 700;
+      background: var(--primary-soft); color: var(--primary);
+    }
+    .compound-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.3rem; display: flex; flex-direction: column; gap: 0.75rem;
+    }
+    .prop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; font-size: 0.82rem; }
+    .prop-box { background: var(--bg-soft); padding: 0.5rem 0.7rem; border-radius: 8px; border: 1px solid var(--border); }
+    .prop-box span { display: block; color: var(--text-muted); font-size: 0.72rem; }
+
+    .chat-box {
+      height: 390px; overflow-y: auto; padding: 1rem;
+      background: var(--bg-soft); border: 1px solid var(--border);
+      border-radius: 14px; display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 1rem;
+    }
+    .msg { max-width: 82%; padding: 0.85rem 1.05rem; border-radius: 14px; font-size: 0.91rem; white-space: pre-line; }
+    .msg.bot { align-self: flex-start; background: var(--bg-card); border: 1px solid var(--border); }
+    .msg.user { align-self: flex-end; background: var(--primary); color: #ffffff; }
+    body.dark-mode .msg.user { color: #060b14; font-weight: 500; }
+
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center;
+      z-index: 2000; padding: 1rem;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 18px; max-width: 520px; width: 100%; padding: 1.65rem;
+      box-shadow: var(--shadow-md); max-height: 90vh; overflow-y: auto;
+    }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.15rem; }
+
+    @media (max-width: 960px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); box-shadow: var(--shadow-md); }
+      .main-area { margin-left: 0; }
+      .mob-menu-btn { display: inline-flex; }
+      .charts-row { grid-template-columns: 1fr; }
+      .hero-stats-merged { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- SIDEBAR NAVIGATION (DI SAMPING KIRI, LOGO SAJA TANPA TEKS) -->
+    <aside class="sidebar" id="appSidebar">
+      <div class="sidebar-logo" onclick="switchView('home')">
+        <img src="/logo_chemistry.png" alt="Chemistry" />
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-view="home" onclick="switchView('home')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Beranda</span>
+        </button>
+        <button class="nav-btn" data-view="dashboard" onclick="switchView('dashboard')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-btn" data-view="discover" onclick="switchView('discover')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6"/><path d="M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3"/></svg>
+          <span>Temukan Senyawa</span>
+        </button>
+        <button class="nav-btn" data-view="calculator" onclick="switchView('calculator')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg>
+          <span>Kalkulator Molekul</span>
+        </button>
+        <button class="nav-btn" data-view="chat" onclick="switchView('chat')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span>Asisten Chety</span>
+        </button>
+        <button class="nav-btn" data-view="history" onclick="switchView('history')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>Riwayat &amp; Favorit</span>
+        </button>
+        <button class="nav-btn" data-view="docs" onclick="switchView('docs')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          <span>Panduan &amp; Artikel</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <div class="main-area">
+      <!-- TOP UTILITY BAR -->
+      <header class="topbar">
+        <button class="mob-menu-btn" onclick="document.getElementById('appSidebar').classList.toggle('open')" aria-label="Menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+
+        <div class="topbar-right">
+          <button class="icon-btn" id="themeToggle" onclick="toggleTheme()" title="Ganti Tema Terang / Gelap">
+            <svg id="themeSvgMoon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            <svg id="themeSvgSun" style="display:none;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/></svg>
+          </button>
+          <div id="authActionArea"></div>
+        </div>
+      </header>
+
+      <!-- VIEW 1: BERANDA (SECTION 1 GAMBAR 2 -> SECTION 2 GAMBAR 3 + MENGAPA CHEMISTRY? -> WORKFLOW) -->
+      <section id="view-home" class="view active">
+        <div class="hero-section">
+          <div class="hero-overlay"></div>
+          <div class="hero-inner">
+            <h1 class="hero-title">Temukan Senyawa Kimia Aman</h1>
+            <p class="hero-subtitle">
+              Percepat riset dan edukasi kimia Anda dengan validasi Lipinski real-time, kalkulator SMILES, dan pustaka senyawa ramah lingkungan.
+            </p>
+            <div class="hero-cta">
+              <button class="btn-primary" onclick="switchView('discover')">Mulai Penemuan Baru</button>
+              <button class="btn-outline" style="background:rgba(255,255,255,0.16);color:#ffffff;border-color:rgba(255,255,255,0.38);" onclick="switchView('dashboard')">Buka Dashboard Analitik</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: GAMBAR 3 DIGABUNG DENGAN MENGAPA CHEMISTRY? -->
+        <div class="section-two">
+          <div class="container">
+            <div class="hero-stats-merged">
+              <div>
+                <div class="hero-stat-val">9+</div>
+                <div class="hero-stat-lbl">Pustaka Senyawa Aman</div>
+              </div>
+              <div>
+                <div class="hero-stat-val">Real-Time</div>
+                <div class="hero-stat-lbl">Kalkulator Lipinski</div>
+              </div>
+              <div>
+                <div class="hero-stat-val">100%</div>
+                <div class="hero-stat-lbl">Ramah Lingkungan</div>
+              </div>
+            </div>
+
+            <div class="section-head">
+              <h2>Mengapa <span>Chemistry?</span></h2>
+              <p>Komputasi kimia modern yang diterjemahkan menjadi antarmuka sederhana, informatif, dan aman bagi semua kalangan.</p>
+            </div>
+
+            <div class="grid-3">
+              <div class="feature-card">
+                <div class="feature-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+                </div>
+                <h3>Rekomendasi Multi-Kriteria</h3>
+                <p>Saring kandidat surfaktan, biopolimer, dan pelarut hijau berdasarkan titik didih, viskositas, kelarutan, maupun kebutuhan harian.</p>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6"/><path d="M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3"/></svg>
+                </div>
+                <h3>Validasi SMILES &amp; Lipinski</h3>
+                <p>Hitung berat molekul, LogP, donor dan akseptor ikatan hidrogen, serta kelayakan Rule of Five sebelum formulasi.</p>
+              </div>
+              <div class="feature-card">
+                <div class="feature-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                </div>
+                <h3>Dashboard Analitik Terpadu</h3>
+                <p>Pantau tren penemuan, distribusi metode input, tingkat kepercayaan model, dan koleksi senyawa favorit dalam satu layar.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: ALUR KERJA -->
+        <div class="landing-section">
+          <div class="container">
+            <div class="section-head">
+              <h2>Alur Kerja <span>4 Langkah</span></h2>
+              <p>Dari ide kebutuhan formulasi atau riset hingga rekomendasi molekul yang tervalidasi.</p>
+            </div>
+            <div class="grid-4">
+              <div class="step-card">
+                <div class="step-num">1</div>
+                <h3>Input Kriteria</h3>
+                <p>Gunakan form terstruktur, prompt bahasa alami, atau template cepat.</p>
+              </div>
+              <div class="step-card">
+                <div class="step-num">2</div>
+                <h3>Analisis Kandidat</h3>
+                <p>Mesin rekomendasi menilai kesesuaian sifat fisikokimia tiap molekul.</p>
+              </div>
+              <div class="step-card">
+                <div class="step-num">3</div>
+                <h3>Validasi Molekul</h3>
+                <p>Periksa skor keamanan lingkungan, kelarutan, dan aturan Lipinski.</p>
+              </div>
+              <div class="step-card">
+                <div class="step-num">4</div>
+                <h3>Bandingkan &amp; Simpan</h3>
+                <p>Bandingkan dua kandidat berdampingan dan simpan ke daftar favorit.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: DASHBOARD -->
+      <section id="view-dashboard" class="view">
+        <div class="container page-wrap">
+          <div class="page-header">
+            <div>
+              <h1>Selamat datang, <span id="dashUserName">Peneliti</span></h1>
+              <p>Ringkasan metrik penemuan kimia, distribusi kepercayaan, dan aktivitas riset Anda.</p>
+            </div>
+            <button class="btn-primary" onclick="switchView('discover')">Penemuan Baru</button>
+          </div>
+
+          <div class="grid-4">
+            <div class="card stat-card">
+              <div><div class="stat-label">Total Penemuan</div><div class="stat-value" id="statTotalDisc">0</div></div>
+              <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 3h6"/><path d="M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3"/></svg></div>
+            </div>
+            <div class="card stat-card">
+              <div><div class="stat-label">Senyawa Tersedia</div><div class="stat-value" id="statTotalComp">9</div></div>
+              <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="9"/></svg></div>
+            </div>
+            <div class="card">
+              <div class="stat-card">
+                <div><div class="stat-label">Rata-rata Kepercayaan</div><div class="stat-value" id="statAvgConf">92%</div></div>
+                <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+              </div>
+              <div class="progress-track"><div class="progress-fill" id="statConfBar" style="width:92%"></div></div>
+            </div>
+            <div class="card stat-card">
+              <div><div class="stat-label">Senyawa Favorit</div><div class="stat-value" id="statTotalFav">0</div></div>
+              <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+            </div>
+          </div>
+
+          <div class="charts-row">
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <h3>Timeline Penemuan (7 Hari Terakhir)</h3>
+                <span class="chip">Mingguan</span>
+              </div>
+              <div style="height:270px;"><canvas id="timelineChart"></canvas></div>
+            </div>
+            <div class="card">
+              <h3 style="margin-bottom:1rem;">Metode Input</h3>
+              <div style="height:250px;display:flex;align-items:center;justify-content:center;">
+                <canvas id="inputModeChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-top:1.35rem;">
+            <div class="card">
+              <h3 style="margin-bottom:1rem;">Distribusi Skor Kepercayaan</h3>
+              <div style="height:230px;"><canvas id="confidenceChart"></canvas></div>
+            </div>
+            <div class="card">
+              <h3 style="margin-bottom:1rem;">Indikator Kinerja Utama</h3>
+              <div class="kpi-item">
+                <div><div class="stat-label">Rata-rata Kandidat per Penemuan</div><strong id="kpiCompPerDisc">3.0 senyawa</strong></div>
+              </div>
+              <div class="kpi-item">
+                <div><div class="stat-label">Tingkat Keberhasilan Validasi</div><strong id="kpiSuccessRate">92%</strong></div>
+              </div>
+              <div class="kpi-item">
+                <div><div class="stat-label">Sesi Aktif Minggu Ini</div><strong id="kpiThisWeek">1 sesi</strong></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: DISCOVERY -->
+      <section id="view-discover" class="view">
+        <div class="container page-wrap">
+          <div class="page-header">
+            <div>
+              <h1>Temukan <span>Senyawa Aman</span></h1>
+              <p>Pilih template, tentukan rentang properti fisikokimia, atau masukkan prompt kebutuhan Anda.</p>
+            </div>
+            <button class="btn-outline" id="compareBtn" onclick="openCompareModal()" style="display:none;">Bandingkan (<span id="compareCount">0</span>)</button>
+          </div>
+
+          <div class="grid-2" style="grid-template-columns:1fr 1.6fr;align-items:start;">
+            <div class="card">
+              <div class="tabs">
+                <button class="tab-btn active" onclick="setDiscoverMode('Structured Form', this)">Form Terstruktur</button>
+                <button class="tab-btn" onclick="setDiscoverMode('AI Prompt', this)">Prompt Bahasa Alami</button>
+              </div>
+
+              <div id="modeStructured">
+                <div class="form-group">
+                  <label>Kategori Senyawa</label>
+                  <select id="discCategory">
+                    <option value="All">Semua Kategori</option>
+                    <option value="Surfactant">Surfaktan (Pembersih Aman)</option>
+                    <option value="Biopolymer">Biopolimer &amp; Kemasan</option>
+                    <option value="Green Solvent">Pelarut Hijau</option>
+                  </select>
+                </div>
+                <div class="grid-2" style="grid-template-columns:1fr 1fr;gap:0.75rem;">
+                  <div class="form-group"><label>Titik Didih Min (C)</label><input id="bpMin" type="number" class="input" placeholder="150" /></div>
+                  <div class="form-group"><label>Titik Didih Max (C)</label><input id="bpMax" type="number" class="input" placeholder="350" /></div>
+                </div>
+                <div class="form-group">
+                  <label>Kelarutan dalam Air</label>
+                  <select id="discSolubility">
+                    <option value="Any">Bebas / Apa Saja</option>
+                    <option value="High">Tinggi (Mudah Larut)</option>
+                    <option value="Moderate">Sedang</option>
+                    <option value="Low">Rendah</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="modePrompt" style="display:none;">
+                <div class="form-group">
+                  <label>Jelaskan Kebutuhan Anda</label>
+                  <textarea id="discPrompt" rows="4" class="input" placeholder="Contoh: Saya butuh surfaktan pembersih lembut di kulit yang biodegradable..."></textarea>
+                </div>
+              </div>
+
+              <button class="btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;" onclick="runDiscovery()">Jalankan Analisis</button>
+
+              <div style="margin-top:1.4rem;border-top:1px solid var(--border);padding-top:1rem;">
+                <label style="font-size:0.82rem;font-weight:700;color:var(--text-muted);display:block;margin-bottom:0.55rem;">Template Cepat:</label>
+                <div id="templateList" style="display:flex;flex-direction:column;gap:0.45rem;"></div>
+              </div>
+            </div>
+
+            <div>
+              <div id="discoverySummary" class="card" style="margin-bottom:1rem;display:none;"></div>
+              <div id="discoveryResults" class="grid-2">
+                <div class="card" style="grid-column:1/-1;text-align:center;padding:3rem 1.5rem;color:var(--text-muted);">
+                  Pilih kriteria atau template di sebelah kiri lalu klik <strong>Jalankan Analisis</strong>.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 4: CALCULATOR -->
+      <section id="view-calculator" class="view">
+        <div class="container page-wrap">
+          <div class="page-header">
+            <div>
+              <h1>Kalkulator <span>Molekul &amp; Lipinski</span></h1>
+              <p>Masukkan notasi SMILES untuk menghitung estimasi Berat Molekul, LogP, dan kelayakan Rule of Five.</p>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="form-group">
+                <label>Notasi SMILES</label>
+                <input id="smilesInput" class="input" value="CCCCCCOCCOCCO" />
+              </div>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
+                <button class="tab-btn" onclick="setSmiles('CCCCCCOCCOCCO')">Hexyl Triethoxylate</button>
+                <button class="tab-btn" onclick="setSmiles('CC(O)C(=O)OCC')">Ethyl Lactate</button>
+                <button class="tab-btn" onclick="setSmiles('CC(=O)OC1=CC=CC=C1C(=O)O')">Aspirin</button>
+              </div>
+              <button class="btn-primary" onclick="calcSmiles()">Hitung Properti Molekul</button>
+            </div>
+            <div class="card" id="smilesResult">
+              <p style="color:var(--text-muted);">Hasil kalkulasi Lipinski Rule-of-5 akan ditampilkan di sini.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 5: CHETY ASSISTANT -->
+      <section id="view-chat" class="view">
+        <div class="container page-wrap" style="max-width:860px;">
+          <div class="page-header">
+            <div>
+              <h1>Asisten <span>Chety</span></h1>
+              <p>Konsultasikan senyawa kimia aman, formulasi skincare, parameter Lipinski, atau topik sains kimia apa saja.</p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="chat-box" id="chatBox">
+              <div class="msg bot">Halo, saya Chety. Tanyakan apa saja seputar senyawa kimia aman, cara membuat formulasi dasar skincare/pembersih, atau penjelasan konsep kimia.</div>
+            </div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.85rem;">
+              <button class="tab-btn" onclick="quickChat('Cara formulasi skincare yang aman untuk kulit')">Formulasi Skincare</button>
+              <button class="tab-btn" onclick="quickChat('Rekomendasi surfaktan biodegradable')">Surfaktan Aman</button>
+              <button class="tab-btn" onclick="quickChat('Jelaskan aturan Lipinski dan LogP')">Aturan Lipinski</button>
+            </div>
+            <div style="display:flex;gap:0.65rem;">
+              <input id="chatInput" class="input" placeholder="Tulis pertanyaan untuk Chety..." onkeypress="if(event.key==='Enter') sendChat()" />
+              <button class="btn-primary" onclick="sendChat()">Kirim</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 6: HISTORY & FAVORITES -->
+      <section id="view-history" class="view">
+        <div class="container page-wrap">
+          <div class="page-header">
+            <div>
+              <h1>Riwayat &amp; <span>Senyawa Favorit</span></h1>
+              <p>Semua sesi penemuan dan molekul pilihan Anda tersimpan di sini.</p>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <h3 style="margin-bottom:1rem;">Riwayat Penemuan</h3>
+              <div id="historyList">Memuat...</div>
+            </div>
+            <div class="card">
+              <h3 style="margin-bottom:1rem;">Senyawa Favorit</h3>
+              <div id="favoritesList">Memuat...</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 7: DOKUMENTASI CARA PAKAI & SARAN ARTIKEL CHEMICAL DISCOVERY -->
+      <section id="view-docs" class="view">
+        <div class="container page-wrap">
+          <div class="page-header">
+            <div>
+              <h1>Panduan Pengguna &amp; <span>Artikel Chemical Discovery</span></h1>
+              <p>Dokumentasi lengkap cara menggunakan platform Chemistry serta kumpulan artikel referensi riset penemuan kimia.</p>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:1.75rem;">
+            <h2 style="font-size:1.25rem;margin-bottom:1rem;">Dokumentasi Cara Pakai Aplikasi</h2>
+            <div class="grid-2">
+              <div class="kpi-item">
+                <div>
+                  <strong>1. Pencarian Senyawa (Temukan Senyawa)</strong>
+                  <p style="font-size:0.86rem;color:var(--text-muted);margin-top:0.25rem;">Gunakan Form Terstruktur untuk menyaring berdasarkan kategori dan titik didih, atau pilih Prompt Bahasa Alami untuk mendeskripsikan kebutuhan formulasi secara bebas.</p>
+                </div>
+              </div>
+              <div class="kpi-item">
+                <div>
+                  <strong>2. Kalkulator Molekul (SMILES &amp; Lipinski)</strong>
+                  <p style="font-size:0.86rem;color:var(--text-muted);margin-top:0.25rem;">Tempel notasi SMILES kandidat molekul guna memvalidasi berat molekul (&le; 500 g/mol), LogP (&le; 5), donor/akseptor ikatan hidrogen.</p>
+                </div>
+              </div>
+              <div class="kpi-item">
+                <div>
+                  <strong>3. Konsultasi dengan Asisten Chety</strong>
+                  <p style="font-size:0.86rem;color:var(--text-muted);margin-top:0.25rem;">Ajukan pertanyaan terbuka tentang formulasi produk harian, keamanan pelarut, hingga definisi senyawa kimia langsung dari pustaka referensi.</p>
+                </div>
+              </div>
+              <div class="kpi-item">
+                <div>
+                  <strong>4. Dashboard Analitik &amp; Perbandingan</strong>
+                  <p style="font-size:0.86rem;color:var(--text-muted);margin-top:0.25rem;">Tandai hingga dua kandidat senyawa untuk dibandingkan berdampingan, lalu pantau metrik riset pada Dashboard.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:1rem;">
+            <h2 style="font-size:1.3rem;">Saran Artikel Terkait Chemical Discovery</h2>
+            <p style="color:var(--text-muted);font-size:0.9rem;">Referensi konsep inti dalam penemuan senyawa modern dan kimia hijau.</p>
+          </div>
+          <div id="chemArticlesGrid" class="grid-3"></div>
+        </div>
+      </section>
+
+      <!-- FOOTER (DENGAN LINK HALAMAN DOKUMENTASI & ARTIKEL) -->
+      <footer>
+        <div><strong>Chemistry</strong> &bull; Platform Eksplorasi &amp; Validasi Senyawa Kimia</div>
+        <div class="footer-links">
+          <button onclick="switchView('docs')">Dokumentasi Cara Pakai</button>
+          <button onclick="switchView('docs')">Saran Artikel Chemical Discovery</button>
+          <button onclick="switchView('chat')">Tanya Chety</button>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <!-- AUTH MODAL -->
+  <div class="modal-backdrop" id="authModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Masuk ke Chemistry</h3>
+        <button class="icon-btn" onclick="closeModal('authModal')">X</button>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" id="tabLogin" onclick="toggleAuthTab('login')">Masuk</button>
+        <button class="tab-btn" id="tabRegister" onclick="toggleAuthTab('register')">Daftar Baru</button>
+      </div>
+      <div id="loginForm">
+        <div class="form-group"><label>Username atau Email</label><input id="loginId" class="input" value="Bayu Wicaksono" /></div>
+        <div class="form-group"><label>Kata Sandi</label><input id="loginPass" type="password" class="input" value="chem123" /></div>
+        <button class="btn-primary" style="width:100%;justify-content:center;" onclick="doLogin()">Masuk</button>
+      </div>
+      <div id="registerForm" style="display:none;">
+        <div class="form-group"><label>Nama Lengkap</label><input id="regName" class="input" /></div>
+        <div class="form-group"><label>Username</label><input id="regUser" class="input" /></div>
+        <div class="form-group"><label>Email</label><input id="regEmail" class="input" /></div>
+        <div class="form-group"><label>Kata Sandi (min. 6 karakter)</label><input id="regPass" type="password" class="input" /></div>
+        <button class="btn-primary" style="width:100%;justify-content:center;" onclick="doRegister()">Daftar Akun</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE MODAL -->
+  <div class="modal-backdrop" id="profileModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Profil &amp; Pengaturan Akun</h3>
+        <button class="icon-btn" onclick="closeModal('profileModal')">X</button>
+      </div>
+      <div class="form-group"><label>Nama Lengkap</label><input id="profName" class="input" /></div>
+      <div class="form-group"><label>Username</label><input id="profUser" class="input" /></div>
+      <div class="form-group"><label>Email</label><input id="profEmail" class="input" /></div>
+      <div class="form-group"><label>Peran / Bidang</label><input id="profRole" class="input" /></div>
+      <div class="form-group"><label>Foto Profil (Opsional)</label><input id="profPhotoFile" type="file" accept="image/*" class="input" onchange="handlePhotoUpload(this)" /></div>
+      <button class="btn-primary" style="width:100%;justify-content:center;margin-bottom:1.1rem;" onclick="saveProfile()">Simpan Perubahan Profil</button>
+      <hr style="border:none;border-top:1px solid var(--border);margin-bottom:1rem;" />
+      <h4 style="margin-bottom:0.75rem;">Ganti Kata Sandi</h4>
+      <div class="form-group"><label>Kata Sandi Lama</label><input id="oldPass" type="password" class="input" /></div>
+      <div class="form-group"><label>Kata Sandi Baru</label><input id="newPass" type="password" class="input" /></div>
+      <button class="btn-outline" style="width:100%;justify-content:center;" onclick="changePassword()">Perbarui Kata Sandi</button>
+    </div>
+  </div>
+
+  <!-- COMPARE MODAL -->
+  <div class="modal-backdrop" id="compareModal">
+    <div class="modal" style="max-width:760px;">
+      <div class="modal-head">
+        <h3>Perbandingan Senyawa</h3>
+        <button class="icon-btn" onclick="closeModal('compareModal')">X</button>
+      </div>
+      <div id="compareBody" class="grid-2"></div>
+    </div>
+  </div>
+
+  <script>
+    let currentUser = JSON.parse(localStorage.getItem("chem_user") || "null");
+    let discoverMode = "Structured Form";
+    let favoriteIds = [];
+    let compareList = [];
+    let lastCompounds = [];
+    let chartInstances = {};
+
+    function initTheme() {
+      const saved = localStorage.getItem("chem_theme") || "light";
+      document.body.classList.toggle("dark-mode", saved === "dark");
+      document.getElementById("themeSvgMoon").style.display = saved === "dark" ? "none" : "block";
+      document.getElementById("themeSvgSun").style.display = saved === "dark" ? "block" : "none";
+    }
+
+    function toggleTheme() {
+      const isDark = !document.body.classList.contains("dark-mode");
+      document.body.classList.toggle("dark-mode", isDark);
+      localStorage.setItem("chem_theme", isDark ? "dark" : "light");
+      document.getElementById("themeSvgMoon").style.display = isDark ? "none" : "block";
+      document.getElementById("themeSvgSun").style.display = isDark ? "block" : "none";
+      if (document.getElementById("view-dashboard").classList.contains("active")) loadDashboard();
+    }
+
+    function switchView(name) {
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      document.getElementById("view-" + name).classList.add("active");
+      document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === name));
+      document.getElementById("appSidebar").classList.remove("open");
+      closeProfileDropdown();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (name === "dashboard") loadDashboard();
+      if (name === "history") loadHistoryAndFavs();
+      if (name === "docs") loadChemArticles();
+    }
+
+    function renderAuthArea() {
+      const box = document.getElementById("authActionArea");
+      if (!currentUser) {
+        box.innerHTML = `<button class="btn-primary" style="padding:0.45rem 0.95rem;font-size:0.84rem;" onclick="openModal('authModal')">Masuk / Daftar</button>`;
+        return;
+      }
+      const initial = (currentUser.fullName || currentUser.username || "P")[0].toUpperCase();
+      const avatar = currentUser.photoUrl ? `<img src="${currentUser.photoUrl}" alt="avatar"/>` : initial;
+      box.innerHTML = `
+        <button class="avatar-trigger" onclick="toggleProfileDropdown(event)" title="${currentUser.fullName || currentUser.username}">
+          ${avatar}
+        </button>
+        <div class="dropdown-menu" id="profileDropdownMenu">
+          <div class="dropdown-header">
+            <strong>${currentUser.fullName || currentUser.username}</strong>
+            <span>${currentUser.role || "Peneliti Kimia"}</span>
+          </div>
+          <button class="dropdown-item" onclick="switchView('dashboard')">Dashboard Analitik</button>
+          <button class="dropdown-item" onclick="openProfileModal()">Profil &amp; Pengaturan</button>
+          <button class="dropdown-item" onclick="switchView('history')">Riwayat &amp; Favorit</button>
+          <button class="dropdown-item danger" onclick="logout()">Keluar Akun</button>
+        </div>
+      `;
+    }
+
+    function toggleProfileDropdown(e) {
+      e.stopPropagation();
+      const m = document.getElementById("profileDropdownMenu");
+      if (m) m.classList.toggle("open");
+    }
+    function closeProfileDropdown() {
+      const m = document.getElementById("profileDropdownMenu");
+      if (m) m.classList.remove("open");
+    }
+    document.addEventListener("click", closeProfileDropdown);
+
+    function openModal(id) { document.getElementById(id).classList.add("open"); }
+    function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+
+    function toggleAuthTab(tab) {
+      document.getElementById("tabLogin").classList.toggle("active", tab === "login");
+      document.getElementById("tabRegister").classList.toggle("active", tab === "register");
+      document.getElementById("loginForm").style.display = tab === "login" ? "block" : "none";
+      document.getElementById("registerForm").style.display = tab === "register" ? "block" : "none";
+    }
+
+    async function doLogin() {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier: document.getElementById("loginId").value, password: document.getElementById("loginPass").value })
+      });
+      const data = await res.json();
+      if (!res.ok) return alert(data.detail || "Gagal masuk");
+      currentUser = data.user;
+      localStorage.setItem("chem_user", JSON.stringify(currentUser));
+      renderAuthArea();
+      closeModal("authModal");
+    }
+
+    async function doRegister() {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: document.getElementById("regName").value,
+          username: document.getElementById("regUser").value,
+          email: document.getElementById("regEmail").value,
+          password: document.getElementById("regPass").value,
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) return alert(data.detail || "Gagal daftar");
+      currentUser = data.user;
+      localStorage.setItem("chem_user", JSON.stringify(currentUser));
+      renderAuthArea();
+      closeModal("authModal");
+    }
+
+    function logout() {
+      currentUser = null;
+      localStorage.removeItem("chem_user");
+      renderAuthArea();
+      switchView("home");
+    }
+
+    function openProfileModal() {
+      closeProfileDropdown();
+      if (!currentUser) return openModal("authModal");
+      document.getElementById("profName").value = currentUser.fullName || "";
+      document.getElementById("profUser").value = currentUser.username || "";
+      document.getElementById("profEmail").value = currentUser.email || "";
+      document.getElementById("profRole").value = currentUser.role || "";
+      openModal("profileModal");
+    }
+
+    let pendingPhoto = null;
+    function handlePhotoUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => { pendingPhoto = reader.result; };
+      reader.readAsDataURL(file);
+    }
+
+    async function saveProfile() {
+      const res = await fetch("/api/profile/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          originalUsername: currentUser.username,
+          fullName: document.getElementById("profName").value,
+          username: document.getElementById("profUser").value,
+          email: document.getElementById("profEmail").value,
+          role: document.getElementById("profRole").value,
+          photoUrl: pendingPhoto !== null ? pendingPhoto : (currentUser.photoUrl || "")
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) return alert(data.detail || "Gagal simpan profil");
+      currentUser = data.user;
+      pendingPhoto = null;
+      localStorage.setItem("chem_user", JSON.stringify(currentUser));
+      renderAuthArea();
+      closeModal("profileModal");
+      alert("Profil berhasil diperbarui.");
+    }
+
+    async function changePassword() {
+      const res = await fetch("/api/profile/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: currentUser.username,
+          oldPassword: document.getElementById("oldPass").value,
+          newPassword: document.getElementById("newPass").value,
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) return alert(data.detail || "Gagal ubah sandi");
+      alert("Kata sandi berhasil diperbarui.");
+      document.getElementById("oldPass").value = "";
+      document.getElementById("newPass").value = "";
+    }
+
+    async function loadDashboard() {
+      document.getElementById("dashUserName").textContent = currentUser ? (currentUser.fullName || currentUser.username) : "Peneliti";
+      const res = await fetch("/api/stats");
+      const data = await res.json();
+      const s = data.stats;
+      const c = data.charts;
+
+      document.getElementById("statTotalDisc").textContent = s.totalDiscoveries;
+      document.getElementById("statTotalComp").textContent = s.librarySize;
+      const pct = Math.round((s.avgConfidence || 0.92) * 100);
+      document.getElementById("statAvgConf").textContent = pct + "%";
+      document.getElementById("statConfBar").style.width = pct + "%";
+      document.getElementById("statTotalFav").textContent = s.totalFavorites;
+      document.getElementById("kpiCompPerDisc").textContent = (s.totalDiscoveries > 0 ? (s.totalCompounds / s.totalDiscoveries).toFixed(1) : "3.0") + " senyawa";
+      document.getElementById("kpiSuccessRate").textContent = pct + "%";
+      document.getElementById("kpiThisWeek").textContent = s.thisWeek + " sesi";
+
+      const cs = getComputedStyle(document.body);
+      const primary = cs.getPropertyValue("--primary").trim();
+      const secondary = cs.getPropertyValue("--secondary").trim();
+      const accent = cs.getPropertyValue("--accent").trim();
+      const textMuted = cs.getPropertyValue("--text-muted").trim();
+      const border = cs.getPropertyValue("--border").trim();
+
+      Object.values(chartInstances).forEach(ch => ch && ch.destroy());
+
+      chartInstances.timeline = new Chart(document.getElementById("timelineChart"), {
+        type: "line",
+        data: { labels: c.timeline.labels, datasets: [{ label: "Penemuan", data: c.timeline.data, borderColor: primary, backgroundColor: primary + "22", fill: true, tension: 0.35 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: textMuted }, grid: { color: border } }, y: { beginAtZero: true, ticks: { color: textMuted }, grid: { color: border } } } }
+      });
+
+      chartInstances.inputMode = new Chart(document.getElementById("inputModeChart"), {
+        type: "doughnut",
+        data: { labels: c.inputMode.labels, datasets: [{ data: c.inputMode.data, backgroundColor: [primary, secondary, accent], borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { color: textMuted } } } }
+      });
+
+      chartInstances.confidence = new Chart(document.getElementById("confidenceChart"), {
+        type: "bar",
+        data: { labels: c.confidence.labels, datasets: [{ label: "Jumlah", data: c.confidence.data, backgroundColor: primary, borderRadius: 8 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: textMuted }, grid: { display: false } }, y: { beginAtZero: true, ticks: { color: textMuted }, grid: { color: border } } } }
+      });
+    }
+
+    function setDiscoverMode(mode, btn) {
+      discoverMode = mode;
+      btn.parentElement.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("modeStructured").style.display = mode === "Structured Form" ? "block" : "none";
+      document.getElementById("modePrompt").style.display = mode === "AI Prompt" ? "block" : "none";
+    }
+
+    async function loadTemplates() {
+      const [tRes, fRes] = await Promise.all([fetch("/api/templates"), fetch("/api/favorites")]);
+      const tData = await tRes.json();
+      const fData = await fRes.json();
+      favoriteIds = fData.favorite_ids || [];
+      document.getElementById("templateList").innerHTML = (tData.templates || []).map(t => `
+        <button class="tab-btn" style="text-align:left;width:100%;" onclick='applyTemplate(${JSON.stringify(t)})'>${t.title}</button>
+      `).join("");
+    }
+
+    function applyTemplate(t) {
+      document.getElementById("discCategory").value = t.category || "All";
+      if (t.bp_min) document.getElementById("bpMin").value = t.bp_min;
+      if (t.bp_max) document.getElementById("bpMax").value = t.bp_max;
+      document.getElementById("discPrompt").value = t.prompt || "";
+      runDiscovery("Template Cepat");
+    }
+
+    async function runDiscovery(overrideMode) {
+      const payload = {
+        category: document.getElementById("discCategory").value,
+        bp_min: document.getElementById("bpMin").value ? Number(document.getElementById("bpMin").value) : null,
+        bp_max: document.getElementById("bpMax").value ? Number(document.getElementById("bpMax").value) : null,
+        solubility: document.getElementById("discSolubility").value,
+        prompt_text: document.getElementById("discPrompt").value,
+        input_mode: overrideMode || discoverMode
+      };
+      const res = await fetch("/api/discover", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      const disc = data.discovery;
+      lastCompounds = disc.compounds || [];
+      const sumBox = document.getElementById("discoverySummary");
+      sumBox.style.display = "block";
+      sumBox.innerHTML = `<strong>Ringkasan Analisis (${disc.id}):</strong> <span style="color:var(--text-muted)">${disc.analysis_summary}</span>`;
+      renderCompounds(lastCompounds, "discoveryResults");
+    }
+
+    function renderCompounds(list, containerId) {
+      const box = document.getElementById(containerId);
+      if (!list.length) {
+        box.innerHTML = `<div class="card">Tidak ada senyawa yang cocok dengan kriteria tersebut.</div>`;
+        return;
+      }
+      box.innerHTML = list.map(c => {
+        const isFav = favoriteIds.includes(c.id);
+        const isCmp = compareList.includes(c.id);
+        return `
+          <div class="compound-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;">
+              <div>
+                <span class="chip">${c.category}</span>
+                <h3 style="margin-top:0.4rem;">${c.name}</h3>
+                <small style="color:var(--text-muted)">${c.formula || ""} &bull; Skor ${Math.round((c.confidence || 0.9) * 100)}%</small>
+              </div>
+              <button class="tab-btn ${isFav ? "active" : ""}" style="padding:0.35rem 0.65rem;font-size:0.76rem;" onclick="toggleFav('${c.id}')">${isFav ? "Tersimpan" : "Simpan"}</button>
+            </div>
+            <p style="font-size:0.87rem;color:var(--text-muted);">${c.family_explanation || c.description || ""}</p>
+            <div class="prop-grid">
+              <div class="prop-box"><span>Titik Didih</span><strong>${c.boiling_point_c ?? "-"} C</strong></div>
+              <div class="prop-box"><span>Kelarutan</span><strong>${c.solubility ?? "-"}</strong></div>
+              <div class="prop-box"><span>Keamanan</span><strong>${c.safety_rating ?? "Aman"}</strong></div>
+              <div class="prop-box"><span>SMILES</span><strong style="font-size:0.74rem;word-break:break-all;">${c.smiles ?? "-"}</strong></div>
+            </div>
+            <button class="tab-btn ${isCmp ? "active" : ""}" onclick="toggleCompare('${c.id}')">
+              ${isCmp ? "Dipilih untuk Perbandingan" : "Pilih untuk Bandingkan"}
+            </button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function toggleFav(id) {
+      const res = await fetch("/api/favorites/toggle", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ compound_id: id })
+      });
+      const data = await res.json();
+      favoriteIds = data.favorite_ids || [];
+      if (lastCompounds.length) renderCompounds(lastCompounds, "discoveryResults");
+      if (document.getElementById("view-history").classList.contains("active")) loadHistoryAndFavs();
+    }
+
+    function toggleCompare(id) {
+      if (compareList.includes(id)) compareList = compareList.filter(x => x !== id);
+      else if (compareList.length < 2) compareList.push(id);
+      else compareList = [compareList[1], id];
+      document.getElementById("compareCount").textContent = compareList.length;
+      document.getElementById("compareBtn").style.display = compareList.length ? "inline-flex" : "none";
+      if (lastCompounds.length) renderCompounds(lastCompounds, "discoveryResults");
+    }
+
+    function openCompareModal() {
+      const items = lastCompounds.filter(c => compareList.includes(c.id));
+      document.getElementById("compareBody").innerHTML = items.map(c => `
+        <div class="card">
+          <span class="chip">${c.category}</span>
+          <h3 style="margin:0.5rem 0;">${c.name}</h3>
+          <p style="font-size:0.86rem;color:var(--text-muted);margin-bottom:0.75rem;">${c.family_explanation || ""}</p>
+          <div class="prop-grid">
+            <div class="prop-box"><span>Titik Didih</span><strong>${c.boiling_point_c ?? "-"} C</strong></div>
+            <div class="prop-box"><span>Kelarutan</span><strong>${c.solubility ?? "-"}</strong></div>
+            <div class="prop-box"><span>Viskositas</span><strong>${c.viscosity_cp ?? "-"} cP</strong></div>
+            <div class="prop-box"><span>Keamanan</span><strong>${c.safety_rating ?? "Aman"}</strong></div>
+          </div>
+        </div>
+      `).join("");
+      openModal("compareModal");
+    }
+
+    function setSmiles(val) { document.getElementById("smilesInput").value = val; calcSmiles(); }
+    async function calcSmiles() {
+      const res = await fetch("/api/calculator", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ smiles: document.getElementById("smilesInput").value })
+      });
+      const d = await res.json();
+      if (!d.ok) {
+        document.getElementById("smilesResult").innerHTML = `<p style="color:#ef4444">${d.error || "SMILES tidak valid"}</p>`;
+        return;
+      }
+      document.getElementById("smilesResult").innerHTML = `
+        <h3 style="margin-bottom:0.75rem;">Hasil Analisis Molekul</h3>
+        <div class="prop-grid">
+          <div class="prop-box"><span>Berat Molekul</span><strong>${d.molecular_weight} g/mol</strong></div>
+          <div class="prop-box"><span>LogP (Lipofilisitas)</span><strong>${d.logp}</strong></div>
+          <div class="prop-box"><span>Donor Ikatan H</span><strong>${d.h_donors}</strong></div>
+          <div class="prop-box"><span>Akseptor Ikatan H</span><strong>${d.h_acceptors}</strong></div>
+        </div>
+        <div style="margin-top:1rem;padding:0.75rem;border-radius:10px;background:var(--primary-soft);color:var(--primary);font-weight:600;">
+          ${d.lipinski_pass ? "Memenuhi Aturan Lipinski (Stabil & Ramah Biologis)" : "Melebihi batas standar Aturan Lipinski"}
+        </div>
+      `;
+    }
+
+    function quickChat(text) { document.getElementById("chatInput").value = text; sendChat(); }
+    async function sendChat() {
+      const inp = document.getElementById("chatInput");
+      const msg = inp.value.trim();
+      if (!msg) return;
+      const box = document.getElementById("chatBox");
+      box.innerHTML += `<div class="msg user">${msg}</div>`;
+      inp.value = "";
+      box.scrollTop = box.scrollHeight;
+      const res = await fetch("/api/chat", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: msg })
+      });
+      const data = await res.json();
+      box.innerHTML += `<div class="msg bot">${data.reply}</div>`;
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function loadHistoryAndFavs() {
+      const [hRes, fRes] = await Promise.all([fetch("/api/history"), fetch("/api/favorites")]);
+      const hData = await hRes.json();
+      const fData = await fRes.json();
+      favoriteIds = fData.favorite_ids || [];
+
+      document.getElementById("historyList").innerHTML = (hData.history || []).length
+        ? hData.history.map(h => `
+            <div class="kpi-item" style="justify-content:space-between;">
+              <div>
+                <strong>${h.id} &bull; ${h.category}</strong>
+                <div style="font-size:0.82rem;color:var(--text-muted);">${h.prompt_text} (${h.createdAt})</div>
+              </div>
+              <button class="tab-btn" style="padding:0.35rem 0.65rem;" onclick="deleteHistory('${h.id}')">Hapus</button>
+            </div>
+          `).join("")
+        : `<p style="color:var(--text-muted);">Belum ada riwayat penemuan.</p>`;
+
+      document.getElementById("favoritesList").innerHTML = (fData.favorites || []).length
+        ? fData.favorites.map(c => `
+            <div class="kpi-item" style="justify-content:space-between;">
+              <div>
+                <strong>${c.name}</strong>
+                <div style="font-size:0.82rem;color:var(--text-muted);">${c.category} &bull; ${c.safety_rating || "Aman"}</div>
+              </div>
+              <button class="tab-btn active" style="padding:0.35rem 0.65rem;" onclick="toggleFav('${c.id}')">Hapus</button>
+            </div>
+          `).join("")
+        : `<p style="color:var(--text-muted);">Belum ada senyawa favorit.</p>`;
+    }
+
+    async function deleteHistory(id) {
+      await fetch("/api/history/" + id, { method: "DELETE" });
+      loadHistoryAndFavs();
+    }
+
+    async function loadChemArticles() {
+      const grid = document.getElementById("chemArticlesGrid");
+      grid.innerHTML = `<div class="card">Memuat artikel referensi...</div>`;
+      const res = await fetch("/api/chem-articles");
+      const data = await res.json();
+      const arts = data.articles || [];
+      grid.innerHTML = arts.map(a => `
+        <article class="card" style="display:flex;flex-direction:column;gap:0.65rem;">
+          <span class="chip" style="align-self:flex-start;">${a.tag}</span>
+          <h3 style="font-size:1.06rem;">${a.title}</h3>
+          <p style="font-size:0.86rem;color:var(--text-muted);flex:1;">${a.extract}</p>
+          <a href="${a.source_url}" target="_blank" rel="noopener" class="btn-outline" style="justify-content:center;font-size:0.84rem;padding:0.5rem 0.9rem;">Baca Sumber Asli (${a.source_name})</a>
+        </article>
+      `).join("");
+    }
+
+    initTheme();
+    renderAuthArea();
+    loadTemplates();
+  </script>
+</body>
+</html>
