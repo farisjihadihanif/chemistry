@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Warna dasar: kertas meja lab (abu kehijauan sangat muda), tinta slate, biru kobalt.
+   Skala skor mengikuti indikator bromtimol biru: kuning -> hijau -> biru. */
+:root {
+  --paper: 243 245 242;
+  --surface: 255 255 255;
+  --sunk: 233 237 233;
+  --line: 214 221 216;
+  --ink: 22 35 46;
+  --ink-soft: 63 78 90;
+  --ink-mute: 94 108 120;
+  --cobalt: 29 78 137;
+  --cobalt-soft: 223 232 244;
+  --cobalt-ink: 255 255 255;
+  --ind-low: 166 118 8;
+  --ind-mid: 47 122 77;
+  --ind-high: 29 78 137;
+  --danger: 178 34 34;
+  color-scheme: light;
+}
+.dark {
+  --paper: 13 22 29;
+  --surface: 20 32 41;
+  --sunk: 26 40 51;
+  --line: 44 61 74;
+  --ink: 226 233 238;
+  --ink-soft: 183 196 206;
+  --ink-mute: 146 162 175;
+  --cobalt: 120 168 230;
+  --cobalt-soft: 28 49 73;
+  --cobalt-ink: 13 22 29;
+  --ind-low: 230 183 70;
+  --ind-mid: 110 196 141;
+  --ind-high: 120 168 230;
+  --danger: 248 113 113;
+  color-scheme: dark;
+}
+
+@layer base {
+  html { -webkit-tap-highlight-color: transparent; }
+  body { font-feature-settings: "tnum" 0; }
+  :focus-visible { outline: 2px solid rgb(var(--cobalt)); outline-offset: 2px; }
+  h1, h2, h3 { letter-spacing: -0.01em; }
+}
+
+@layer components {
+  .container-page { @apply mx-auto w-full max-w-6xl px-4 sm:px-6; }
+  .panel { @apply rounded-lg border border-line bg-surface; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply btn bg-cobalt text-cobalt-ink hover:bg-cobalt/90; }
+  .btn-outline { @apply btn border border-line bg-surface text-ink hover:border-ink-mute; }
+  .btn-ghost { @apply btn text-ink-soft hover:bg-sunk hover:text-ink; }
+  .btn-sm { @apply px-3 py-1.5 text-xs; }
+  .field { @apply w-full rounded-md border border-line bg-surface px-3 py-2 text-[15px] text-ink placeholder:text-ink-mute focus:border-cobalt focus:outline-none focus:ring-2 focus:ring-cobalt/20; }
+  .label { @apply mb-1.5 block text-sm font-semibold text-ink; }
+  .num { @apply font-mono tabular-nums; }
+  .prose-chem { @apply text-[15px] leading-relaxed text-ink; }
+  .prose-chem p { @apply my-2; }
+  .prose-chem ul { @apply my-2 list-disc pl-5; }
+  .prose-chem ol { @apply my-2 list-decimal pl-5; }
+  .prose-chem li { @apply my-0.5; }
+  .prose-chem h1, .prose-chem h2, .prose-chem h3 { @apply mb-1 mt-4 font-semibold; }
+  .prose-chem code { @apply rounded bg-sunk px-1 py-0.5 font-mono text-[13px]; }
+  .prose-chem strong { @apply font-semibold; }
+  .prose-chem a { @apply text-cobalt underline; }
+  .prose-chem table { @apply my-2 w-full text-sm; }
+  .prose-chem th, .prose-chem td { @apply border border-line px-2 py-1 text-left; }
+  .prose-page h2 { @apply mt-8 text-xl font-semibold; }
+}
+
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.page-enter { animation: page-enter 0.28s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise 0.35s ease-out backwards; }
+@media (prefers-reduced-motion: reduce) {
+  .page-enter, .rise { animation: none; }
+}
+
+/* Gambar struktur RDKit: garis mengikuti warna tinta */
+.structure svg { width: 100%; height: 100%; }
