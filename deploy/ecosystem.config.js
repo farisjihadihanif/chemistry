@@ -22,7 +22,7 @@ module.exports = {
       script: path.join(root, "ml-service", ".venv", "bin", "uvicorn"),
       args: "app:app --host 127.0.0.1 --port 5000 --workers 1",
       interpreter: "none",
-      max_memory_restart: "1500M",
+      max_memory_restart: "2000M",
       out_file: "/var/log/chemistry/ml.log",
       error_file: "/var/log/chemistry/ml-error.log",
       time: true,

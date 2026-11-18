@@ -22,3 +22,4 @@ mobile/ios/Flutter/Generated.xcconfig
 mobile/ios/Flutter/flutter_export_environment.sh
 *.iml
 .idea/
+ml-service/data/kaggle/

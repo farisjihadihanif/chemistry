@@ -36,7 +36,7 @@ Satu VPS menjalankan dua proses: **API Node** (sekaligus menyajikan web hasil bu
    sudo mkdir -p /var/log/chemistry && sudo chown $USER /var/log/chemistry
    pm2 start deploy/ecosystem.config.js
    pm2 save && pm2 startup
-   pm2 logs --lines 30   # harus ada "Pustaka: 12776 senyawa" dan "ml-service tersambung"
+   pm2 logs --lines 30   # harus ada "Pustaka: 16115 senyawa" dan "ml-service tersambung"
    ```
 6. **Nginx dan HTTPS:**
    1. Salin `deploy/nginx-chemistry.conf` ke `/etc/nginx/sites-available/domainmu.id` dan ganti nama domainnya.
