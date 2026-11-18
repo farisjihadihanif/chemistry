@@ -59,7 +59,8 @@ class ChestyArt extends StatelessWidget {
       SvgPicture.string(chestySvg, width: width, height: width * 140 / 120);
 }
 
-/// Chesty mengambang yang melompat pelan; tekan untuk membuka obrolan.
+/// Chesty mengambang (animasi WebP seperti LUMA). Saat ditekan/ditahan ia melompat girang
+/// dan memunculkan label "Tanya Chesty"; ketukan membuka obrolan.
 class FloatingChesty extends StatefulWidget {
   const FloatingChesty({super.key, required this.onTap});
   final VoidCallback onTap;
@@ -67,68 +68,52 @@ class FloatingChesty extends StatefulWidget {
   State<FloatingChesty> createState() => _FloatingChestyState();
 }
 
-class _FloatingChestyState extends State<FloatingChesty>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController c = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 2800),
-  )..repeat();
-  bool label = false;
-
-  @override
-  void dispose() {
-    c.dispose();
-    super.dispose();
-  }
+class _FloatingChestyState extends State<FloatingChesty> {
+  bool active = false;
 
   @override
   Widget build(BuildContext context) {
     final p = Palette.of(context);
-    final still = MediaQuery.of(context).disableAnimations;
     return Semantics(
       button: true,
       label: 'Tanya Chesty',
       child: GestureDetector(
         onTap: widget.onTap,
-        onLongPress: () => setState(() => label = !label),
-        child: Row(
+        onTapDown: (_) => setState(() => active = true),
+        onTapCancel: () => setState(() => active = false),
+        onTapUp: (_) => setState(() => active = false),
+        onLongPressEnd: (_) => setState(() => active = false),
+        onLongPress: () {},
+        child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             AnimatedOpacity(
-              opacity: label ? 1 : 0,
-              duration: const Duration(milliseconds: 180),
+              opacity: active ? 1 : 0,
+              duration: const Duration(milliseconds: 150),
               child: Container(
-                margin: const EdgeInsets.only(right: 6),
+                margin: const EdgeInsets.only(bottom: 4),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
-                  vertical: 6,
+                  vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: p.surface,
+                  color: p.cobalt,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: p.line),
                 ),
-                child: const Text(
+                child: Text(
                   'Tanya Chesty',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: p.onCobalt,
+                  ),
                 ),
               ),
             ),
-            AnimatedBuilder(
-              animation: c,
-              builder: (_, child) {
-                // lompatan singkat di awal siklus, lalu diam
-                final t = still ? 1.0 : c.value;
-                final hop = t < 0.25
-                    ? -14 * (1 - ((t / 0.125) - 1) * ((t / 0.125) - 1))
-                    : 0.0;
-                return Transform.translate(
-                  offset: Offset(0, hop),
-                  child: child,
-                );
-              },
-              child: const ChestyArt(width: 58),
+            Image.asset(
+              active ? 'assets/chesty-hover.webp' : 'assets/chesty-idle.webp',
+              width: 64,
+              gaplessPlayback: true,
             ),
           ],
         ),

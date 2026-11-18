@@ -86,14 +86,41 @@
 .structure svg { width: 100%; height: 100%; }
 
 /* Chesty melompat kecil setiap beberapa detik */
-@keyframes chesty-hop {
-  0%, 62%, 100% { transform: translateY(0) scaleY(1); }
-  66% { transform: translateY(2px) scaleY(0.94); }
-  74% { transform: translateY(-16px) scaleY(1.03); }
-  82% { transform: translateY(0) scaleY(0.97); }
-  86% { transform: translateY(-5px); }
-  90% { transform: translateY(0); }
+
+
+/* ---- Hero: sistem orbit atom ---- */
+.orbit-system { position: absolute; inset: 0; display: grid; place-items: center; perspective: 1200px; }
+.orbit-tilt {
+  position: relative; width: 0; height: 0;
+  transform: translate(var(--px, 0), var(--py, 0)) rotateX(var(--rx, 0)) rotateY(var(--ry, 0)) scale(var(--orbit-scale, 1));
+  transition: transform 0.6s cubic-bezier(.2,.7,.2,1);
 }
-.chesty-hop { animation: chesty-hop 2.8s ease-in-out infinite; transform-origin: bottom center; }
-.group:hover .chesty-hop { animation-play-state: paused; }
-@media (prefers-reduced-motion: reduce) { .chesty-hop { animation: none; } }
+@media (max-width: 1024px) { .orbit-system { --orbit-scale: .8; } }
+@media (max-width: 640px) { .orbit-system { --orbit-scale: .62; } }
+.orbit-ring {
+  position: absolute; left: 50%; top: 50%; translate: -50% -50%;
+  border-radius: 9999px; border: 1px solid rgb(var(--line));
+  box-shadow: inset 0 0 40px rgb(var(--cobalt) / 0.04);
+}
+.orbit-spin { position: absolute; inset: 0; animation: orbit-turn linear infinite; }
+.orbit-item { position: absolute; left: 50%; top: 50%; width: 0; height: 0; display: grid; place-items: center; }
+.orbit-counter { display: grid; place-items: center; animation: orbit-turn linear infinite; }
+.orbit-electron {
+  position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; margin: -3.5px;
+  border-radius: 9999px; background: rgb(var(--cobalt));
+  box-shadow: 0 0 10px 3px rgb(var(--cobalt) / 0.55);
+}
+.orbit-core {
+  position: absolute; left: 0; top: 0; width: 180px; height: 180px; translate: -50% -50%; border-radius: 9999px;
+  background: radial-gradient(circle, rgb(var(--cobalt) / 0.22) 0%, rgb(var(--cobalt) / 0.06) 45%, transparent 70%);
+  animation: core-pulse 4s ease-in-out infinite;
+}
+@keyframes orbit-turn { to { transform: rotate(360deg); } }
+@keyframes core-pulse { 50% { transform: scale(1.25); opacity: .7; } }
+.hero-title {
+  background-image: linear-gradient(180deg, rgb(var(--ink)) 35%, rgb(var(--ink) / 0.6) 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbit-spin, .orbit-counter, .orbit-core { animation: none; }
+}

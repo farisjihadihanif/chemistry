@@ -39,12 +39,19 @@ LIMITS = {"boiling_point": (-200, 700), "melting_point": (-200, 500), "flash_poi
 
 
 def download_kaggle(dataset: str, dest: Path):
-    try:
-        import kaggle  # noqa: F401
-    except ImportError:
-        subprocess.run([sys.executable, "-m", "pip", "install", "kaggle"], check=True)
+    import importlib.util
+
+    # kaggle 2.x lupa mencantumkan `six` sebagai dependensi, jadi dipasang sekalian.
+    missing = [m for m in ("kaggle", "six") if importlib.util.find_spec(m) is None]
+    if missing:
+        subprocess.run([sys.executable, "-m", "pip", "install", *missing], check=True)
     dest.mkdir(parents=True, exist_ok=True)
-    subprocess.run([sys.executable, "-m", "kaggle", "datasets", "download", "-d", dataset, "-p", str(dest), "--unzip"], check=True)
+    r = subprocess.run([sys.executable, "-m", "kaggle", "datasets", "download", "-d", dataset, "-p", str(dest), "--unzip"])
+    if r.returncode != 0:
+        sys.exit(
+            f"Gagal mengunduh dataset '{dataset}'. Periksa: (1) nama ditulis pemilik/nama-dataset persis seperti di URL Kaggle, "
+            "(2) token ada di ~/.kaggle/access_token, (3) dataset itu publik."
+        )
 
 
 def main():
