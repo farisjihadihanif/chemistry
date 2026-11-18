@@ -34,14 +34,14 @@ export function ScoreBadge({ score, size = "md" }) {
   );
 }
 
-// Penanda sumber angka: bulat penuh = eksperimen (PubChem), bulat kosong = prediksi model.
+// Penanda sumber angka: bulat penuh = eksperimen, bulat kosong = perkiraan.
 export function SourceDot({ source }) {
   if (source === "struktur") return null;
   const exp = source === "eksperimen";
   return (
     <span
       className={`inline-block h-2 w-2 shrink-0 rounded-full border-[1.5px] border-cobalt ${exp ? "bg-cobalt" : "bg-transparent"}`}
-      title={exp ? "Data eksperimen (PubChem)" : "Prediksi model"}
+      title={exp ? "Data eksperimen" : "Nilai perkiraan"}
       aria-label={exp ? "eksperimen" : "prediksi"}
     />
   );

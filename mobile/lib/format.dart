@@ -1,6 +1,18 @@
 import 'dart:math' as math;
 
-const _sup = {'-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'};
+const _sup = {
+  '-': '⁻',
+  '0': '⁰',
+  '1': '¹',
+  '2': '²',
+  '3': '³',
+  '4': '⁴',
+  '5': '⁵',
+  '6': '⁶',
+  '7': '⁷',
+  '8': '⁸',
+  '9': '⁹',
+};
 
 String _id(num v, int digits) {
   final s = v.toStringAsFixed(digits);
@@ -24,7 +36,10 @@ String fmtValue(num? v, [String key = '']) {
     final m = v / math.pow(10, e);
     return '${_id(m, 1)} × 10${e.toString().split('').map((c) => _sup[c] ?? c).join()}';
   }
-  if (v == v.roundToDouble() && const {'hbd', 'hba', 'rot_bonds'}.contains(key)) return _id(v, 0);
+  if (v == v.roundToDouble() &&
+      const {'hbd', 'hba', 'rot_bonds'}.contains(key)) {
+    return _id(v, 0);
+  }
   if (a < 10) {
     final t = _id(v, 2);
     return t.contains(',') ? t.replaceFirst(RegExp(r',?0+$'), '') : t;
@@ -37,7 +52,9 @@ String fmtInt(num v) => _id(v.round(), 0);
 
 String rangeText(Map c, String unit) {
   final u = unit.isEmpty ? '' : ' $unit';
-  if (c['min'] != null && c['max'] != null) return '${c['min']} – ${c['max']}$u';
+  if (c['min'] != null && c['max'] != null) {
+    return '${c['min']} – ${c['max']}$u';
+  }
   if (c['min'] != null) return '≥ ${c['min']}$u';
   return '≤ ${c['max']}$u';
 }
@@ -50,7 +67,20 @@ String timeAgo(String iso) {
   if (s < 3600) return '${s ~/ 60} menit lalu';
   if (s < 86400) return '${s ~/ 3600} jam lalu';
   if (s < 86400 * 7) return '${s ~/ 86400} hari lalu';
-  const bulan = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  const bulan = [
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
+  ];
   return '${d.day} ${bulan[d.month - 1]} ${d.year}';
 }
 

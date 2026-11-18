@@ -32,6 +32,8 @@ function createApp() {
     cors({
       origin(origin, cb) {
         if (!origin || config.clientOrigins.includes(origin.replace(/\/+$/, ""))) return cb(null, true);
+        // Saat pengembangan, izinkan localhost port berapa pun (flutter run -d chrome memakai port acak).
+        if (!config.isProduction && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) return cb(null, true);
         cb(null, false);
       },
       credentials: true,
@@ -49,6 +51,13 @@ function createApp() {
   app.use("/api/favorites", require("./routes/favorites"));
   app.use("/api/chat", require("./routes/chat"));
   app.use("/api/admin", require("./routes/admin"));
+  // Foto profil publik (dipakai web & aplikasi)
+  app.get("/api/avatars/:id", async (req, res) => {
+    const Avatar = require("./models/Avatar");
+    const a = /^[a-f0-9]{24}$/.test(req.params.id) ? await Avatar.findOne({ user: req.params.id }) : null;
+    if (!a) return res.status(404).json({ message: "Foto tidak ada." });
+    res.set("Content-Type", a.mime).set("Cache-Control", "public, max-age=31536000, immutable").set("X-Content-Type-Options", "nosniff").send(a.data);
+  });
   app.use("/api", notFound);
 
   // Kalau web sudah di-build (web/dist), server ini sekalian menyajikannya.

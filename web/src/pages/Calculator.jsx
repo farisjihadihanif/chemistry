@@ -47,7 +47,7 @@ export default function Calculator() {
   return (
     <div className="container-page py-8">
       <h1 className="text-3xl font-semibold">Kalkulator sifat</h1>
-      <p className="mt-2 max-w-2xl text-ink-soft">Masukkan nama senyawa atau SMILES. Kalau senyawanya ada di pustaka, yang tampil adalah data eksperimen; kalau tidak, sifatnya diprediksi model dari strukturnya.</p>
+      <p className="mt-2 max-w-2xl text-ink-soft">Masukkan nama senyawa atau SMILES. Kalau senyawanya ada di pustaka, yang tampil adalah data eksperimen; kalau tidak, sifatnya diperkirakan dari strukturnya.</p>
       <form
         className="mt-6 flex max-w-2xl gap-2"
         onSubmit={(e) => {

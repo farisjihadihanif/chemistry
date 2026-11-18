@@ -47,7 +47,7 @@ function fallbackReason(c, criteria, meta) {
   const parts = [];
   if (ok.length) parts.push(`Memenuhi kriteria ${ok.join(", ")}.`);
   if (miss.length) parts.push(`Belum pas untuk ${miss.join(", ")}.`);
-  if (pred.length) parts.push(`Nilai ${pred.join(", ")} masih perkiraan model, perlu diuji.`);
+  if (pred.length) parts.push(`Nilai ${pred.join(", ")} masih perkiraan, perlu diuji.`);
   if (c.origin === "turunan" && c.rule) parts.push(`Dibuat dari ${c.parent?.name || "senyawa induk"} dengan modifikasi: ${c.rule.toLowerCase()}.`);
   return parts.join(" ");
 }

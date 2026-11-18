@@ -4,7 +4,7 @@ import { Search } from "lucide-react";
 import { api } from "../lib/api";
 import { useAuth } from "../context/Auth";
 import { displayName, formatDate, timeAgo } from "../lib/format";
-import { ConfirmModal, Empty, ErrorBox, Pagination, Spinner } from "../components/ui";
+import { Avatar, ConfirmModal, Empty, ErrorBox, Pagination, Spinner } from "../components/ui";
 
 function Stats() {
   const [s, setS] = useState(null);
@@ -22,7 +22,7 @@ function Stats() {
           ["Admin", s.admins],
           ["Total pencarian", s.discoveries],
           ["Pencarian 7 hari", s.discoveriesWeek],
-          ["Permintaan AI hari ini", s.aiToday],
+          ["Permintaan Chesty & kalimat hari ini", s.aiToday],
         ].map(([l, v]) => (
           <div key={l} className="panel p-3">
             <dd className="num text-2xl font-semibold">{v.toLocaleString("id-ID")}</dd>
@@ -114,11 +114,16 @@ function Users() {
                 return (
                   <tr key={u._id} className={`border-b border-line last:border-0 ${u.aktif ? "" : "opacity-60"}`}>
                     <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                      <Avatar user={u} size={34} />
+                      <div className="min-w-0">
                       <p className="font-medium">
                         {displayName(u)} {u.role === "admin" && <span className="ml-1 rounded bg-cobalt px-1.5 py-0.5 text-[10px] font-semibold text-cobalt-ink">admin</span>}
                         {!u.aktif && <span className="ml-1 rounded bg-sunk px-1.5 py-0.5 text-[10px]">nonaktif</span>}
                       </p>
                       <p className="text-xs text-ink-mute">@{u.username} · {u.email} · sejak {formatDate(u.createdAt)}</p>
+                      </div>
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-ink-soft">{u.institusi || "–"}</td>
                     <td className="num px-4 py-3">{u.discoveries}</td>

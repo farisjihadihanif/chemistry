@@ -1,14 +1,14 @@
 import { Link } from "react-router-dom";
-import { Columns3, ExternalLink, Heart, MessageSquare, Sparkles } from "lucide-react";
+import { Columns3, Heart, MessageSquare, Sparkles } from "lucide-react";
 import { compoundTitle, Formula, GroupTags, PropValue, RangeBar, ScoreBadge, Structure } from "./chem";
 import { propInfo } from "../context/Meta";
 import { keyOf, useCollect } from "../context/Collect";
 import { useAuth } from "../context/Auth";
 
 const NOVELTY = {
-  belum_terdaftar: { text: "Belum terdaftar di PubChem", cls: "text-ind-mid" },
-  terdaftar: { text: "Sudah terdaftar di PubChem, tapi belum ada data sifatnya", cls: "text-ink-mute" },
-  tidak_dicek: { text: "Status di PubChem belum bisa dicek", cls: "text-ink-mute" },
+  belum_terdaftar: { text: "Struktur baru", cls: "text-ind-mid" },
+  terdaftar: { text: "Struktur sudah dikenal, sifatnya diperkirakan", cls: "text-ink-mute" },
+  tidak_dicek: { text: "Status struktur belum dicek", cls: "text-ink-mute" },
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -38,11 +38,6 @@ export function ResultRow({ c, meta, criteria, discoveryId, rank }) {
             </h3>
             <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-soft">
               <Formula value={c.formula} />
-              {c.cid && (
-                <a href={`https://pubchem.ncbi.nlm.nih.gov/compound/${c.cid}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-ink-mute hover:text-cobalt">
-                  CID {c.cid} <ExternalLink size={11} />
-                </a>
-              )}
             </p>
           </div>
         </div>
@@ -50,7 +45,7 @@ export function ResultRow({ c, meta, criteria, discoveryId, rank }) {
           <p className="mt-2 text-xs text-ink-soft">
             {c.origin === "gemini" ? (
               <span className="inline-flex items-center gap-1">
-                <Sparkles size={12} className="text-cobalt" /> Usulan AI
+                <Sparkles size={12} className="text-cobalt" /> Rancangan otomatis
               </span>
             ) : (
               <>Turunan {c.parent?.name || "senyawa induk"}: {c.rule?.toLowerCase()}</>
@@ -74,8 +69,8 @@ export function ResultRow({ c, meta, criteria, discoveryId, rank }) {
             <Columns3 size={14} /> {inCompare(c) ? "Dibandingkan" : "Bandingkan"}
           </button>
           {user && (
-            <Link to={`/asisten?smiles=${encodeURIComponent(c.smiles)}`} className="btn-ghost btn-sm">
-              <MessageSquare size={14} /> Tanya asisten
+            <Link to={`/chesty?smiles=${encodeURIComponent(c.smiles)}`} className="btn-ghost btn-sm">
+              <MessageSquare size={14} /> Tanya Chesty
             </Link>
           )}
         </div>
@@ -102,10 +97,10 @@ export function Legend() {
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-ink-mute">
       <span className="inline-flex items-center gap-1.5">
-        <span className="h-2 w-2 rounded-full border-[1.5px] border-cobalt bg-cobalt" /> data eksperimen PubChem
+        <span className="h-2 w-2 rounded-full border-[1.5px] border-cobalt bg-cobalt" /> data eksperimen
       </span>
       <span className="inline-flex items-center gap-1.5">
-        <span className="h-2 w-2 rounded-full border-[1.5px] border-cobalt" /> prediksi model
+        <span className="h-2 w-2 rounded-full border-[1.5px] border-cobalt" /> nilai perkiraan
       </span>
       <span className="inline-flex items-center gap-1.5">
         <span className="h-2 w-5 rounded-sm bg-cobalt-soft ring-1 ring-cobalt/30" /> rentang target

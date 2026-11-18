@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { Plus, Search, X } from "lucide-react";
+import { ChevronDown, Plus, Search, X } from "lucide-react";
 import { api } from "../lib/api";
 import { propInfo, useMeta } from "../context/Meta";
 import { ErrorBox, PageLoader, Spinner } from "../components/ui";
@@ -16,13 +16,13 @@ const EXAMPLES = [
   "Cairan pendingin mesin yang tetap cair sampai -30 °C dan baru mendidih di atas 180 °C.",
   "Ester berat molekul sedang untuk plasticizer PVC yang hampir tidak menguap.",
 ];
-const STEPS = ["Menyaring pustaka senyawa PubChem", "Merancang dan memprediksi kandidat baru", "Menyusun alasan untuk tiap senyawa"];
+const STEPS = ["Menyaring pustaka senyawa", "Merancang dan memperkirakan kandidat baru", "Menyusun alasan untuk tiap senyawa"];
 
 // Keterangan kecil di tiap baris: berapa data eksperimen & seberapa akurat modelnya.
 function modelNote(t, key) {
   if (!t?.experimental) return null;
   const err = t.log ? `±${(10 ** t.mae).toFixed(1)}×` : `±${key === "density" ? t.mae.toFixed(2) : Math.round(t.mae)} ${t.unit}`;
-  return `${t.experimental.toLocaleString("id-ID")} data eksperimen · galat prediksi rata-rata ${err}`;
+  return `${t.experimental.toLocaleString("id-ID")} data eksperimen · selisih perkiraan rata-rata ${err}`;
 }
 
 function CriterionRow({ meta, k, c, onChange, onRemove }) {
@@ -53,29 +53,48 @@ function CriterionRow({ meta, k, c, onChange, onRemove }) {
   );
 }
 
-function GroupPicker({ meta, label, value, onChange, disabled = [] }) {
+function GroupDropdown({ meta, label, value, onChange, disabled = [] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const close = (e) => !ref.current?.contains(e.target) && setOpen(false);
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+  const byId = Object.fromEntries(meta.groups.map((g) => [g.id, g.label]));
   return (
-    <fieldset>
-      <legend className="mb-2 text-sm font-semibold">{label}</legend>
-      <div className="flex flex-wrap gap-1.5">
-        {meta.groups.map((g) => {
-          const on = value.includes(g.id);
-          const off = disabled.includes(g.id);
-          return (
-            <button
-              type="button"
-              key={g.id}
-              disabled={off}
-              aria-pressed={on}
-              onClick={() => onChange(on ? value.filter((x) => x !== g.id) : [...value, g.id])}
-              className={`rounded-md border px-2 py-1 text-xs ${on ? "border-cobalt bg-cobalt text-cobalt-ink" : "border-line bg-surface text-ink-soft hover:border-ink-mute"} disabled:opacity-35`}
-            >
-              {g.label}
+    <div ref={ref} className="relative">
+      <p className="label">{label}</p>
+      <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="field flex items-center justify-between text-left">
+        <span className={value.length ? "" : "text-ink-mute"}>{value.length ? `${value.length} gugus dipilih` : "Pilih gugus…"}</span>
+        <ChevronDown size={16} className="text-ink-mute" />
+      </button>
+      {open && (
+        <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-md border border-line bg-surface p-1 shadow-lift" role="listbox" aria-multiselectable="true">
+          {meta.groups.map((g) => {
+            const on = value.includes(g.id);
+            const off = disabled.includes(g.id);
+            return (
+              <li key={g.id}>
+                <label className={`flex cursor-pointer items-center gap-2.5 rounded px-2.5 py-1.5 text-sm hover:bg-sunk ${off ? "cursor-not-allowed opacity-40" : ""}`}>
+                  <input type="checkbox" className="h-4 w-4 accent-[rgb(var(--cobalt))]" checked={on} disabled={off} onChange={() => onChange(on ? value.filter((x) => x !== g.id) : [...value, g.id])} />
+                  {g.label}
+                </label>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {value.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {value.map((id) => (
+            <button type="button" key={id} onClick={() => onChange(value.filter((x) => x !== id))} className="inline-flex items-center gap-1 rounded bg-cobalt-soft px-2 py-0.5 text-xs text-cobalt" aria-label={`Hapus ${byId[id]}`}>
+              {byId[id]} <X size={12} />
             </button>
-          );
-        })}
-      </div>
-    </fieldset>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -139,14 +158,12 @@ export default function Discover() {
 
   return (
     <div className="container-page py-8">
-      <div className="max-w-3xl">
+      <div>
         <h1 className="text-3xl font-semibold">Temukan senyawa</h1>
-        <p className="mt-2 text-ink-soft">
-          Tentukan sifat yang dibutuhkan. Chemistry mencari di <span className="num">{meta.compounds.toLocaleString("id-ID")}</span> senyawa PubChem, lalu merancang kandidat baru yang sifatnya diprediksi model.
-        </p>
+        <p className="mt-2 text-ink-soft">Tentukan sifat yang dibutuhkan.</p>
       </div>
 
-      <form onSubmit={submit} className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <form onSubmit={submit} className="mt-8 max-w-3xl">
         <div className="min-w-0">
           <div role="tablist" className="inline-flex rounded-md border border-line bg-surface p-0.5 text-sm">
             {[["form", "Isi kriteria"], ["kalimat", "Tulis kebutuhan"]].map(([v, l]) => (
@@ -160,7 +177,7 @@ export default function Discover() {
             <div className="mt-5">
               <label className="label" htmlFor="prompt">Ceritakan senyawa yang kamu butuhkan</label>
               <textarea id="prompt" className="field min-h-[140px]" maxLength={2000} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Misalnya: untuk apa senyawanya dipakai, suhu kerja, kekentalan, dan apa yang harus dihindari." />
-              {!meta.ai && <p className="mt-2 text-sm text-danger">Mode ini butuh fitur AI yang belum aktif di server. Pakai mode Isi kriteria.</p>}
+              {!meta.ai && <p className="mt-2 text-sm text-danger">Mode ini sedang tidak tersedia. Pakai mode Isi kriteria.</p>}
               <p className="mt-4 text-sm font-semibold">Contoh</p>
               <ul className="mt-2 space-y-1.5">
                 {EXAMPLES.map((x) => (
@@ -171,19 +188,27 @@ export default function Discover() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-4 text-xs text-ink-mute">Kalimatmu diubah AI menjadi kriteria angka. Kriteria itu ditampilkan di halaman hasil dan bisa kamu ubah lewat mode Isi kriteria.</p>
+              <p className="mt-4 text-xs text-ink-mute">Kalimatmu diubah menjadi kriteria angka. Kriteria itu ditampilkan di halaman hasil dan bisa kamu ubah lewat mode Isi kriteria.</p>
             </div>
           ) : (
             <>
               <div className="mt-5">
-                <p className="text-sm font-semibold">Mulai dari kebutuhan umum</p>
-                <div className="mt-2 flex flex-wrap gap-2">
+                <label className="label" htmlFor="preset">Mulai dari kebutuhan umum</label>
+                <select
+                  id="preset"
+                  className="field max-w-md"
+                  value={preset}
+                  onChange={(e) => {
+                    const p = meta.presets.find((x) => x.id === e.target.value);
+                    if (p) applyPreset(p);
+                    else setPreset("");
+                  }}
+                >
+                  <option value="">Pilih kebutuhan…</option>
                   {meta.presets.map((p) => (
-                    <button type="button" key={p.id} onClick={() => applyPreset(p)} title={p.description} className={`rounded-md border px-3 py-1.5 text-sm ${preset === p.id ? "border-cobalt bg-cobalt-soft text-cobalt" : "border-line bg-surface text-ink-soft hover:border-ink-mute"}`}>
-                      {p.name}
-                    </button>
+                    <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
-                </div>
+                </select>
                 {preset && <p className="mt-2 text-sm text-ink-mute">{meta.presets.find((p) => p.id === preset)?.description}</p>}
               </div>
 
@@ -232,24 +257,24 @@ export default function Discover() {
               </div>
 
               <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                <GroupPicker meta={meta} label="Harus memiliki gugus" value={include} onChange={setInclude} disabled={exclude} />
-                <GroupPicker meta={meta} label="Hindari gugus" value={exclude} onChange={setExclude} disabled={include} />
+                <GroupDropdown meta={meta} label="Harus memiliki gugus" value={include} onChange={setInclude} disabled={exclude} />
+                <GroupDropdown meta={meta} label="Hindari gugus" value={exclude} onChange={setExclude} disabled={include} />
               </div>
             </>
           )}
         </div>
 
-        <aside className="lg:sticky lg:top-20 lg:self-start">
-          <div className="panel p-4">
+        <div className="mt-8 border-t border-line pt-6">
+          <div>
             <label className="flex items-start gap-2.5 text-sm">
               <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[rgb(var(--cobalt))]" checked={novel} onChange={(e) => setNovel(e.target.checked)} />
               <span>
                 <span className="font-semibold">Sertakan kandidat senyawa baru</span>
-                <span className="mt-0.5 block text-ink-mute">Turunan dari senyawa terbaik{meta.ai ? " dan usulan AI" : ""}. Sifatnya prediksi, bukan hasil uji.</span>
+                <span className="mt-0.5 block text-ink-mute">Turunan dari senyawa terbaik dan rancangan otomatis. Sifatnya nilai perkiraan, bukan hasil uji.</span>
               </span>
             </label>
             <ErrorBox>{error}</ErrorBox>
-            <button className="btn-primary mt-4 w-full" disabled={busy || !canSubmit}>
+            <button className="btn-primary mt-4 w-full sm:w-auto sm:px-8" disabled={busy || !canSubmit}>
               {busy ? <Spinner className="h-4 w-4 border-white/40 border-t-white" /> : <Search size={16} />} {busy ? "Mencari…" : "Cari senyawa"}
             </button>
             {busy && (
@@ -267,7 +292,7 @@ export default function Discover() {
               </p>
             )}
           </div>
-        </aside>
+        </div>
       </form>
     </div>
   );

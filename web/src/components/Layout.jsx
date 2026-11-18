@@ -1,23 +1,23 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Columns3, Heart, LogOut, Menu, Moon, Settings, Shield, Sun, X } from "lucide-react";
+import { Columns3, Heart, History, LogOut, Menu, Moon, Settings, Shield, Sun, UserPlus, X } from "lucide-react";
 import { useAuth } from "../context/Auth";
 import { useTheme } from "../context/Theme";
 import { useCollect } from "../context/Collect";
 import { displayName } from "../lib/format";
-import { PageLoader } from "./ui";
+import { Avatar, PageLoader } from "./ui";
 import { Logo } from "./Logo";
+import FloatingChesty from "./FloatingChesty";
 
 const NAV_USER = [
   ["/temukan", "Temukan"],
   ["/kalkulator", "Kalkulator"],
   ["/pustaka", "Pustaka"],
-  ["/asisten", "Asisten"],
-  ["/riwayat", "Riwayat"],
+  ["/chesty", "Chesty"],
 ];
 const NAV_GUEST = [
   ["/pustaka", "Pustaka"],
-  ["/data", "Data & model"],
+  ["/tentang", "Tentang data"],
 ];
 
 function ThemeToggle() {
@@ -30,7 +30,7 @@ function ThemeToggle() {
 }
 
 function UserMenu() {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, accounts, switchAccount } = useAuth();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const navigate = useNavigate();
@@ -43,32 +43,60 @@ function UserMenu() {
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, []);
-  const initial = displayName(user).slice(0, 1).toUpperCase();
+  const others = accounts.filter((a) => String(a._id) !== String(user._id));
+  const item = "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm hover:bg-sunk";
   return (
     <div ref={ref} className="relative">
-      <button onClick={() => setOpen((v) => !v)} className="grid h-9 w-9 place-items-center rounded-full bg-cobalt-soft text-sm font-semibold text-cobalt hover:ring-2 hover:ring-line" aria-expanded={open} aria-haspopup="menu" aria-label="Menu akun">
-        {initial}
+      <button onClick={() => setOpen((v) => !v)} className="block shrink-0 rounded-full hover:ring-2 hover:ring-line" aria-expanded={open} aria-haspopup="menu" aria-label="Menu akun">
+        <Avatar user={user} size={36} />
       </button>
       {open && (
-        <div role="menu" className="absolute right-0 top-11 z-40 w-60 rounded-lg border border-line bg-surface p-1.5 shadow-lift">
-          <div className="border-b border-line px-3 pb-2.5 pt-1.5">
-            <p className="truncate text-sm font-semibold">{displayName(user)}</p>
-            <p className="truncate text-xs text-ink-mute">{user.institusi || `@${user.username}`}</p>
+        <div role="menu" className="absolute right-0 top-12 z-40 w-64 rounded-lg border border-line bg-surface p-1.5 shadow-lift">
+          <div className="flex items-center gap-3 border-b border-line px-3 pb-2.5 pt-1.5">
+            <Avatar user={user} size={36} />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold">{displayName(user)}</p>
+              <p className="truncate text-xs text-ink-mute">{user.institusi || `@${user.username}`}</p>
+            </div>
           </div>
-          {[["/favorit", "Favorit", Heart], ["/akun", "Akun", Settings], ...(isAdmin ? [["/admin", "Admin", Shield]] : [])].map(([to, label, Icon]) => (
-            <Link key={to} to={to} role="menuitem" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-sunk">
+          {[["/riwayat", "Riwayat", History], ["/favorit", "Favorit", Heart], ["/bandingkan", "Bandingkan", Columns3], ["/akun", "Akun", Settings], ...(isAdmin ? [["/admin", "Admin", Shield]] : [])].map(([to, label, Icon]) => (
+            <Link key={to} to={to} role="menuitem" className={item}>
               <Icon size={16} className="text-ink-mute" /> {label}
             </Link>
           ))}
+          <div className="mt-1 border-t border-line pt-1">
+            <p className="px-3 pb-1 pt-1.5 text-xs text-ink-mute">Ganti akun</p>
+            {others.map((a) => (
+              <button
+                key={a._id}
+                role="menuitem"
+                className={item}
+                onClick={async () => {
+                  try {
+                    await switchAccount(a._id);
+                    setOpen(false);
+                  } catch {
+                    navigate(`/masuk?tambah=1`);
+                  }
+                }}
+              >
+                <Avatar user={a} size={24} />
+                <span className="min-w-0 truncate">{displayName(a)} <span className="text-ink-mute">@{a.username}</span></span>
+              </button>
+            ))}
+            <Link to="/masuk?tambah=1" role="menuitem" className={item}>
+              <UserPlus size={16} className="text-ink-mute" /> Tambah akun
+            </Link>
+          </div>
           <button
             role="menuitem"
             onClick={async () => {
               await logout();
-              navigate("/");
+              navigate("/masuk");
             }}
-            className="flex w-full items-center gap-3 rounded-md border-t border-line px-3 py-2 text-sm text-danger hover:bg-sunk"
+            className={`${item} border-t border-line text-danger`}
           >
-            <LogOut size={16} /> Keluar
+            <LogOut size={16} /> Keluar dari @{user.username}
           </button>
         </div>
       )}
@@ -91,14 +119,14 @@ function Navbar() {
         <Link to="/" className="flex items-center" aria-label="Chemistry, beranda">
           <Logo />
         </Link>
-        <nav className="ml-4 hidden items-center gap-0.5 md:flex" aria-label="Utama">
-          {nav.map(([to, label]) => (
-            <NavLink key={to} to={to} className={link}>
-              {label}
-            </NavLink>
-          ))}
-        </nav>
         <div className="ml-auto flex items-center gap-1.5">
+          <nav className="mr-2 hidden items-center gap-0.5 md:flex" aria-label="Utama">
+            {nav.map(([to, label]) => (
+              <NavLink key={to} to={to} className={link}>
+                {label}
+              </NavLink>
+            ))}
+          </nav>
           <ThemeToggle />
           {ready && (user ? (
             <UserMenu />
@@ -121,6 +149,11 @@ function Navbar() {
                 {label}
               </NavLink>
             ))}
+            {user && (
+              <NavLink to="/riwayat" className={link}>
+                Riwayat
+              </NavLink>
+            )}
             {!user && (
               <div className="mt-2 flex gap-2 border-t border-line pt-3">
                 <Link to="/masuk" className="btn-outline btn-sm flex-1">Masuk</Link>
@@ -139,7 +172,7 @@ function CompareTray() {
   const { pathname } = useLocation();
   if (!compare.length || pathname === "/bandingkan") return null;
   return (
-    <div className="fixed inset-x-0 bottom-4 z-30 flex justify-center px-4">
+    <div className="fixed inset-x-0 bottom-4 z-30 flex justify-center px-4 pr-24">
       <div className="flex items-center gap-3 rounded-lg border border-line bg-surface py-2 pl-4 pr-2 shadow-lift">
         <Columns3 size={16} className="text-cobalt" />
         <span className="text-sm">
@@ -157,9 +190,9 @@ function Footer() {
     <footer className="mt-20 border-t border-line">
       <div className="container-page grid gap-2 py-5 text-center text-xs text-ink-mute md:grid-cols-3 md:text-left">
         <span>Created by Faris Jihadi Hanif Lubis</span>
-        <span className="md:text-center">Chemistry © 2026 · Data senyawa dari PubChem (NIH)</span>
+        <span className="md:text-center">Chemistry © 2026</span>
         <nav className="flex justify-center gap-4 md:justify-end" aria-label="Informasi">
-          <Link to="/data" className="hover:text-ink">Data & model</Link>
+          <Link to="/tentang" className="hover:text-ink">Tentang data</Link>
           <Link to="/ketentuan" className="hover:text-ink">Ketentuan</Link>
           <Link to="/privasi" className="hover:text-ink">Privasi</Link>
         </nav>
@@ -170,6 +203,7 @@ function Footer() {
 
 export default function Layout() {
   const { pathname } = useLocation();
+  const { user } = useAuth();
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
@@ -177,7 +211,7 @@ export default function Layout() {
     <div className="flex min-h-screen flex-col">
       <Navbar />
       <main className="flex-1">
-        <div key={pathname} className="page-enter">
+        <div key={`${user?._id || "tamu"}:${pathname}`} className="page-enter">
           <Suspense fallback={<PageLoader />}>
             <Outlet />
           </Suspense>
@@ -185,6 +219,7 @@ export default function Layout() {
       </main>
       <Footer />
       <CompareTray />
+      <FloatingChesty />
     </div>
   );
 }

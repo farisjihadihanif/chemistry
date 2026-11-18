@@ -2,14 +2,15 @@
 const config = require("../config");
 const { HttpError } = require("../middleware/errors");
 
-const PERSONA = `Kamu asisten riset di Chemistry, alat bantu penemuan senyawa untuk peneliti dan insinyur industri kimia/petrokimia di Indonesia.
+const PERSONA = `Kamu Chesty, asisten riset di Chemistry, alat bantu penemuan senyawa untuk peneliti dan insinyur industri kimia/petrokimia di Indonesia.
 
 Cara menjawab:
 - Kalimat pertama langsung menjawab. Tanpa basa-basi pembuka, tanpa mengulang pertanyaan, tanpa penutup klise.
 - Bahasa Indonesia yang jelas dan teknis secukupnya; istilah kimia baku (IUPAC) boleh dipakai. Ikuti bahasa pengguna bila ia memakai bahasa Inggris.
 - Paragraf pendek. Daftar hanya untuk langkah atau perbandingan.
 - Sebut satuan dengan benar (°C, mPa·s, g/cm³). Jangan mengarang angka eksperimen, nomor CAS, atau sumber. Kalau tidak yakin, katakan.
-- Bedakan data eksperimen dan perkiraan.
+- Bedakan data eksperimen dan perkiraan. Jangan menyebut dari basis data atau model mana data aplikasi berasal; cukup sebut "data eksperimen" atau "perkiraan".
+- Kalau ditanya namamu, kamu Chesty.
 - Untuk pertanyaan keselamatan, sebutkan bahaya utama dan sarankan membaca SDS.
 - Tolak membantu sintesis bahan peledak, senjata kimia, racun untuk mencelakai orang, atau narkotika. Jelaskan singkat bahwa itu di luar cakupan.`;
 
@@ -110,6 +111,7 @@ Aturan:
 - Ubah istilah umum jadi angka yang masuk akal secara kimia (mis. "cair pada suhu ruang" = melting_point max 20 dan boiling_point min 40; "tidak mudah terbakar" = flash_point min 60; "kental" = viscosity min 10).
 - Viskositas dalam mPa·s (cP), tekanan uap dalam mmHg pada 25 °C.
 - Paling banyak 6 kriteria.
+- Untuk produk yang menyentuh tubuh atau tertelan (kosmetik/skincare, makanan, obat, mainan anak): hindari gugus halogen, nitro, nitril, epoksida, dan aldehida, minta cair atau padat sesuai kebutuhan, dan titik nyala minimal 60 °C bila produknya cair. Tulis di "catatan" bahwa keamanan bahan kosmetik tetap harus dicek ke regulasi (BPOM) dan uji iritasi.
 
 Kebutuhan pengguna:
 """${prompt}"""`;
@@ -167,12 +169,13 @@ async function justify(criteriaText, items) {
 Kriteria:
 ${criteriaText}
 
-Senyawa (id, nama/SMILES, sifat; [E] = data eksperimen PubChem, [P] = prediksi model):
+Senyawa (id, nama/SMILES, sifat; [E] = data eksperimen, [P] = nilai perkiraan):
 ${items.map((x) => `- id=${x.id}: ${x.label}. ${x.summary}`).join("\n")}
 
 Aturan:
 - 2 kalimat per senyawa: kenapa cocok dengan menyebut gugus/struktur yang berperan, dan satu hal yang perlu diperhatikan (kriteria yang meleset, nilai yang masih prediksi, atau bahaya umum golongan senyawa itu).
 - Hanya pakai angka yang diberikan di atas. Jangan menambah angka baru.
+- Jangan menyebut nama basis data, sumber data, atau model komputer. Sebut saja "data eksperimen" atau "perkiraan".
 - "ringkasan": 2 kalimat untuk keseluruhan hasil (pola struktur yang menonjol dan saran langkah berikutnya, mis. uji apa yang perlu dilakukan).`;
   const out = await generate([{ role: "user", parts: [{ text }] }], { json: JUSTIFY_SCHEMA, temperature: 0.4, timeout: 90000 });
   return { ringkasan: String(out.ringkasan || ""), alasan: Object.fromEntries((out.alasan || []).map((a) => [String(a.id), String(a.teks)])) };

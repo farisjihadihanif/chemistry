@@ -12,7 +12,10 @@ const _examples = [
   ['Dioktil adipat (SMILES)', 'CCCCCCCCOC(=O)CCCCC(=O)OCCCCCCCC'],
 ];
 
-bool looksSmiles(String v) => !v.contains(' ') && RegExp(r'[=#()\[\]@\d]').hasMatch(v) || RegExp(r'^[CNOcnosSPFI]+$').hasMatch(v) && !RegExp(r'^[a-z]{4,}$', caseSensitive: false).hasMatch(v);
+bool looksSmiles(String v) =>
+    !v.contains(' ') && RegExp(r'[=#()\[\]@\d]').hasMatch(v) ||
+    RegExp(r'^[CNOcnosSPFI]+$').hasMatch(v) &&
+        !RegExp(r'^[a-z]{4,}$', caseSensitive: false).hasMatch(v);
 
 class CalculatorScreen extends StatefulWidget {
   const CalculatorScreen({super.key});
@@ -41,7 +44,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       error = null;
     });
     try {
-      final r = await api.post('/compounds/analyze', looksSmiles(v) ? {'smiles': v} : {'name': v});
+      final r = await api.post(
+        '/compounds/analyze',
+        looksSmiles(v) ? {'smiles': v} : {'name': v},
+      );
       if (mounted) setState(() => result = r['compound'] as Json);
     } catch (e) {
       if (mounted) {
@@ -60,37 +66,67 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     final p = Palette.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Kalkulator sifat')),
-      body: ListView(padding: const EdgeInsets.fromLTRB(16, 4, 16, 32), children: [
-        const Muted('Masukkan nama senyawa (bahasa Inggris) atau SMILES. Kalau ada di pustaka, yang tampil data eksperimen; kalau tidak, sifatnya diprediksi model.', size: 14),
-        const SizedBox(height: 12),
-        Row(children: [
-          Expanded(
-            child: TextField(
-              controller: input,
-              autocorrect: false,
-              textInputAction: TextInputAction.search,
-              onSubmitted: run,
-              style: mono(context, size: 14),
-              decoration: const InputDecoration(hintText: 'ethyl lactate atau CCOC(=O)C(C)O'),
-            ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+        children: [
+          const Muted(
+            'Masukkan nama senyawa (bahasa Inggris) atau SMILES. Kalau ada di pustaka, yang tampil data eksperimen; kalau tidak, sifatnya diperkirakan dari struktur.',
+            size: 14,
           ),
-          const SizedBox(width: 8),
-          FilledButton(onPressed: busy ? null : () => run(input.text), child: busy ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Hitung')),
-        ]),
-        const SizedBox(height: 8),
-        Wrap(spacing: 4, children: [
-          for (final e in _examples)
-            TextButton(
-              onPressed: () {
-                input.text = e[1];
-                run(e[1]);
-              },
-              child: Text(e[0]),
-            ),
-        ]),
-        ErrorText(error),
-        if (result != null) ...[const SizedBox(height: 12), Divider(color: p.line), const SizedBox(height: 12), CompoundBody(c: result!)],
-      ]),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: input,
+                  autocorrect: false,
+                  textInputAction: TextInputAction.search,
+                  onSubmitted: run,
+                  style: mono(context, size: 14),
+                  decoration: const InputDecoration(
+                    hintText: 'ethyl lactate atau CCOC(=O)C(C)O',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              FilledButton(
+                onPressed: busy ? null : () => run(input.text),
+                child: busy
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text('Hitung'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 4,
+            children: [
+              for (final e in _examples)
+                TextButton(
+                  onPressed: () {
+                    input.text = e[1];
+                    run(e[1]);
+                  },
+                  child: Text(e[0]),
+                ),
+            ],
+          ),
+          ErrorText(error),
+          if (result != null) ...[
+            const SizedBox(height: 12),
+            Divider(color: p.line),
+            const SizedBox(height: 12),
+            CompoundBody(c: result!),
+          ],
+        ],
+      ),
     );
   }
 }

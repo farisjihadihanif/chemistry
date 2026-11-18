@@ -8,6 +8,7 @@ const { usage } = require("../services/quota");
 const Discovery = require("../models/Discovery");
 const Favorite = require("../models/Favorite");
 const { str } = require("../util");
+const Avatar = require("../models/Avatar");
 
 const router = express.Router();
 router.use(requireAuth);
@@ -29,6 +30,27 @@ router.patch("/me", async (req, res) => {
   res.json({ user: u.toSelf() });
 });
 
+// Foto profil: badan permintaan berisi gambar (image/jpeg, png, atau webp), maks 1 MB.
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+router.put("/me/foto", express.raw({ type: IMAGE_TYPES, limit: "1mb" }), async (req, res) => {
+  const mime = String(req.headers["content-type"] || "").split(";")[0];
+  if (!IMAGE_TYPES.includes(mime) || !Buffer.isBuffer(req.body) || req.body.length < 100) throw new HttpError(400, "Kirim foto JPG, PNG, atau WebP.");
+  const sig = req.body.subarray(0, 12).toString("hex");
+  const ok = (mime === "image/jpeg" && sig.startsWith("ffd8ff")) || (mime === "image/png" && sig.startsWith("89504e47")) || (mime === "image/webp" && sig.startsWith("52494646") && req.body.subarray(8, 12).toString() === "WEBP");
+  if (!ok) throw new HttpError(400, "File itu bukan gambar yang valid.");
+  await Avatar.updateOne({ user: req.user._id }, { mime, data: req.body }, { upsert: true });
+  req.user.fotoVersi = (req.user.fotoVersi || 0) + 1;
+  await req.user.save();
+  res.json({ user: req.user.toSelf() });
+});
+
+router.delete("/me/foto", async (req, res) => {
+  await Avatar.deleteOne({ user: req.user._id });
+  req.user.fotoVersi = 0;
+  await req.user.save();
+  res.json({ user: req.user.toSelf() });
+});
+
 router.put("/me/password", async (req, res) => {
   const user = await User.findById(req.user._id).select("+password");
   if (!(await bcrypt.compare(String(req.body.passwordLama || ""), user.password))) throw new HttpError(400, "Password lama salah.");
@@ -37,8 +59,8 @@ router.put("/me/password", async (req, res) => {
   user.password = await bcrypt.hash(baru, 10);
   user.tokenVersion = (user.tokenVersion || 0) + 1;
   await user.save();
-  const token = issueToken(res, user);
-  res.json({ ok: true, token });
+  const token = issueToken(res, user, req);
+  res.json({ ok: true, token, user: user.toSelf() });
 });
 
 router.delete("/me", async (req, res) => {
@@ -47,7 +69,7 @@ router.delete("/me", async (req, res) => {
   if (user.role === "admin" && (await User.countDocuments({ role: "admin", aktif: true })) <= 1) throw new HttpError(400, "Kamu admin terakhir. Jadikan user lain admin dulu.");
   await deleteUserData(user._id);
   await user.deleteOne();
-  clearToken(res);
+  clearToken(res, req);
   res.json({ ok: true });
 });
 

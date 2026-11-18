@@ -30,7 +30,7 @@ export default function Library() {
     <div className="container-page py-8">
       <h1 className="text-3xl font-semibold">Pustaka senyawa</h1>
       <p className="mt-2 max-w-2xl text-ink-soft">
-        {meta ? <span className="num">{meta.compounds.toLocaleString("id-ID")}</span> : "Ribuan"} senyawa organik dengan data sifat eksperimen dari PubChem. Cari dengan nama (bahasa Inggris), rumus molekul, atau nomor CID.
+        {meta ? <span className="num">{meta.compounds.toLocaleString("id-ID")}</span> : "Ribuan"} senyawa organik dengan data sifat eksperimen. Cari dengan nama (bahasa Inggris) atau rumus molekul.
       </p>
       <form
         className="mt-6 flex max-w-xl gap-2"
@@ -39,7 +39,7 @@ export default function Library() {
           if (input.trim()) setParams({ q: input.trim() });
         }}
       >
-        <input className="field" value={input} onChange={(e) => setInput(e.target.value)} placeholder="mis. glycol, C8H18, 702" aria-label="Cari senyawa" />
+        <input className="field" value={input} onChange={(e) => setInput(e.target.value)} placeholder="mis. glycol, C8H18" aria-label="Cari senyawa" />
         <button className="btn-primary shrink-0"><Search size={16} /> Cari</button>
       </form>
       <div className="mt-4 max-w-xl"><ErrorBox>{error}</ErrorBox></div>
@@ -57,9 +57,9 @@ export default function Library() {
                   <div className="min-w-0">
                     <p className="truncate font-semibold">{c.name}</p>
                     <p className="text-sm text-ink-soft"><Formula value={c.formula} /></p>
-                    {c.cid && <p className="num text-xs text-ink-mute">CID {c.cid}</p>}
+                    
                     <div className="mt-1.5"><GroupTags meta={meta} groups={c.groups} max={3} /></div>
-                    {!c.in_library && <p className="mt-1 text-xs text-ink-mute">Dari PubChem, sifat diprediksi</p>}
+                    {!c.in_library && <p className="mt-1 text-xs text-ink-mute">Sifat diperkirakan</p>}
                   </div>
                 </Link>
               </li>

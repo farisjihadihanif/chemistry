@@ -37,7 +37,7 @@ export default function DiscoveryResult() {
         </div>
         <div className="flex flex-wrap gap-2">
           <button className="btn-outline btn-sm" onClick={editAgain}><Pencil size={14} /> Ubah kriteria</button>
-          <a className="btn-outline btn-sm" href={exportUrl(d._id, "csv")}><Download size={14} /> CSV</a>
+          <a className="btn-outline btn-sm" href={exportUrl(d._id, "xlsx")}><Download size={14} /> Laporan Excel</a>
           <a className="btn-outline btn-sm" href={exportUrl(d._id, "json")}><Download size={14} /> JSON</a>
           <button className="btn-ghost btn-sm text-danger" onClick={() => setDel(true)} aria-label="Hapus dari riwayat"><Trash2 size={14} /></button>
         </div>
@@ -63,7 +63,7 @@ export default function DiscoveryResult() {
         </div>
         <div className="panel p-4">
           <p className="num text-3xl font-semibold text-cobalt">{d.matched.toLocaleString("id-ID")}</p>
-          <p className="text-sm text-ink-soft">senyawa di pustaka memenuhi semua kriteria (dengan data eksperimen atau prediksi).</p>
+          <p className="text-sm text-ink-soft">senyawa di pustaka memenuhi semua kriteria.</p>
         </div>
       </section>
 
@@ -73,7 +73,7 @@ export default function DiscoveryResult() {
 
       <section className="mt-6">
         <h2 className="text-xl font-semibold">Senyawa yang sudah dikenal</h2>
-        <p className="mt-1 text-sm text-ink-mute">Dari pustaka PubChem, diurutkan menurut skor kecocokan.</p>
+        <p className="mt-1 text-sm text-ink-mute">Diurutkan menurut skor kecocokan.</p>
         <div className="mt-4 space-y-3">
           {d.known.length ? d.known.map((c, i) => <ResultRow key={c.smiles} c={c} meta={meta} criteria={d.criteria} discoveryId={d._id} rank={i} />) : <Empty title="Tidak ada senyawa yang cocok">Coba longgarkan rentang atau kurangi gugus yang dihindari.</Empty>}
         </div>
@@ -83,7 +83,7 @@ export default function DiscoveryResult() {
         <section className="mt-12">
           <h2 className="text-xl font-semibold">Kandidat senyawa baru</h2>
           <p className="mt-1 max-w-3xl text-sm text-ink-mute">
-            Struktur hasil modifikasi senyawa terbaik{d.novel.some((c) => c.origin === "gemini") ? " dan usulan AI" : ""}, divalidasi RDKit. Semua sifatnya prediksi model, jadi perlu dikonfirmasi lewat sintesis dan uji laboratorium.
+            Struktur hasil modifikasi senyawa terbaik{d.novel.some((c) => c.origin === "gemini") ? " dan rancangan otomatis" : ""}. Semua sifatnya nilai perkiraan, jadi perlu dikonfirmasi lewat sintesis dan uji laboratorium.
           </p>
           <div className="mt-4 space-y-3">
             {d.novel.map((c, i) => <ResultRow key={c.smiles} c={c} meta={meta} criteria={d.criteria} discoveryId={d._id} rank={i} />)}

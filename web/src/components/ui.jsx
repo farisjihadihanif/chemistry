@@ -1,3 +1,4 @@
+import { assetUrl } from "../lib/api";
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X } from "lucide-react";
 
@@ -100,5 +101,17 @@ export function Pagination({ page, pages, onChange }) {
       <button className={btn} onClick={() => go(page + 1)} disabled={page === pages} aria-label="Berikutnya"><ChevronRight size={16} /></button>
       <button className={btn} onClick={() => go(pages)} disabled={page === pages} aria-label="Halaman terakhir"><ChevronsRight size={16} /></button>
     </nav>
+  );
+}
+
+// Foto profil, atau inisial nama bila belum ada foto.
+export function Avatar({ user, size = 36, className = "" }) {
+  const name = user?.namaLengkap || user?.username || "?";
+  const style = { width: size, height: size, minWidth: size };
+  if (user?.foto) return <img src={assetUrl(user.foto)} alt="" style={style} className={`max-w-none shrink-0 rounded-full object-cover ${className}`} />;
+  return (
+    <span style={{ ...style, fontSize: size * 0.42 }} className={`grid shrink-0 place-items-center rounded-full bg-cobalt-soft font-semibold text-cobalt ${className}`} aria-hidden>
+      {name.slice(0, 1).toUpperCase()}
+    </span>
   );
 }

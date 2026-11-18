@@ -5,6 +5,7 @@ const Discovery = require("../models/Discovery");
 const ml = require("../services/ml");
 const gemini = require("../services/gemini");
 const { criteriaText, propertySummary, fallbackReason, label } = require("../services/explain");
+const { discoveryWorkbook, discoveryJson } = require("../services/report");
 const { checkQuota } = require("../services/quota");
 const { requireAuth } = require("../middleware/auth");
 const { HttpError, isId } = require("../middleware/errors");
@@ -172,22 +173,13 @@ router.get("/:id/export", async (req, res) => {
   const meta = await ml.meta();
   const name = `chemistry-${d.judul.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40)}-${d.createdAt.toISOString().slice(0, 10)}`;
   if (req.query.format === "json") {
-    res.set("Content-Disposition", `attachment; filename="${name}.json"`);
-    return res.json({ judul: d.judul, dibuat: d.createdAt, kriteria: d.criteria, gugusWajib: d.includeGroups, gugusDihindari: d.excludeGroups, senyawaDikenal: d.known, kandidatBaru: d.novel, ringkasan: d.ringkasan });
+    res.set("Content-Type", "application/json; charset=utf-8").set("Content-Disposition", `attachment; filename="${name}.json"`);
+    return res.send(JSON.stringify(discoveryJson(d, meta, req.user), null, 2));
   }
-  const props = [...Object.keys(meta.targets), ...Object.keys(meta.computed)];
-  const head = ["jenis", "skor", "nama", "cid_pubchem", "rumus", "smiles", ...props.flatMap((k) => [`${k}`, `${k}_sumber`]), "alasan"];
-  const esc = (v) => {
-    const s = v == null ? "" : String(v);
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
-  const rows = [...d.known.map((c) => ["dikenal", c]), ...d.novel.map((c) => ["kandidat_baru", c])].map(([jenis, c]) => [
-    jenis, c.score, c.name, c.cid ?? c.pubchem_cid ?? "", c.formula, c.smiles,
-    ...props.flatMap((k) => [c.properties?.[k]?.value != null ? Number(c.properties[k].value.toPrecision(5)) : "", c.properties?.[k]?.source || ""]),
-    c.alasan,
-  ]);
-  res.set("Content-Type", "text/csv; charset=utf-8").set("Content-Disposition", `attachment; filename="${name}.csv"`);
-  res.send("﻿" + [head, ...rows].map((r) => r.map(esc).join(",")).join("\n"));
+  const wb = await discoveryWorkbook(d, meta, req.user);
+  res.set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").set("Content-Disposition", `attachment; filename="${name}.xlsx"`);
+  await wb.xlsx.write(res);
+  res.end();
 });
 
 module.exports = router;

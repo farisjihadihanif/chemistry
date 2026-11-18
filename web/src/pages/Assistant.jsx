@@ -8,6 +8,7 @@ import { api } from "../lib/api";
 import { timeAgo } from "../lib/format";
 import { Structure } from "../components/chem";
 import { Spinner } from "../components/ui";
+import { ChestyArt } from "../components/Chesty";
 
 const STARTERS = [
   "Kenapa ester rantai panjang cocok sebagai plasticizer?",
@@ -97,8 +98,9 @@ export default function Assistant() {
         <div className="flex-1 space-y-5 overflow-y-auto p-4 sm:p-6">
           {messages.length === 0 && (
             <div className="mx-auto max-w-lg py-10 text-center">
-              <h1 className="text-2xl font-semibold">Asisten kimia</h1>
-              <p className="mt-2 text-sm text-ink-soft">Tanya soal sifat, struktur, keselamatan, atau cara menguji senyawa. Kalau datang dari halaman senyawa, data senyawanya ikut dibaca.</p>
+              <ChestyArt className="mx-auto h-auto w-24" />
+              <h1 className="mt-3 text-2xl font-semibold">Halo, aku Chesty.</h1>
+              <p className="mt-2 text-sm text-ink-soft">Tanya soal sifat, struktur, keselamatan, atau cara menguji senyawa. Kalau datang dari halaman senyawa, data senyawanya ikut kubaca.</p>
               <div className="mt-5 flex flex-col gap-2">
                 {STARTERS.map((s) => (
                   <button key={s} onClick={() => send(s)} className="rounded-md border border-line px-3 py-2 text-left text-sm text-ink-soft hover:border-cobalt hover:text-ink">
@@ -115,8 +117,11 @@ export default function Assistant() {
                 {m.smiles && <p className="mt-1 break-all font-mono text-[11px] opacity-80">{m.smiles}</p>}
               </div>
             ) : (
-              <div key={i} className="prose-chem max-w-[92%]">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+              <div key={i} className="flex max-w-[95%] gap-3">
+                <ChestyArt className="mt-1 h-auto w-8 shrink-0" />
+                <div className="prose-chem min-w-0">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                </div>
               </div>
             ),
           )}
@@ -149,14 +154,14 @@ export default function Assistant() {
                   send(input);
                 }
               }}
-              placeholder="Tulis pertanyaan"
+              placeholder="Tanya Chesty"
               aria-label="Pertanyaan"
             />
             <button className="btn-primary" disabled={busy || !input.trim()} aria-label="Kirim"><Send size={16} /></button>
           </form>
           <p className="mt-2 text-[11px] text-ink-mute">
             {quota?.remaining != null && <>Sisa <span className="num">{quota.remaining}</span> permintaan hari ini. </>}
-            Jawaban AI bisa keliru; cek ulang angka penting ke literatur atau SDS.
+            Chesty bisa keliru; cek ulang angka penting ke literatur atau SDS.
           </p>
         </div>
       </section>

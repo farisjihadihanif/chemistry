@@ -14,7 +14,9 @@ Dibuat oleh Faris Jihadi Hanif Lubis.
 - **Kalkulator sifat:** masukkan nama atau SMILES, lalu lihat data eksperimen atau prediksi.
 - **Pustaka:** cari 12.776 senyawa berdasarkan nama, rumus, atau CID.
 - **Fitur lain:** bandingkan senyawa (maks. 3), favorit dengan catatan dan tag, riwayat pencarian, ekspor CSV/JSON.
-- **Asisten kimia:** tanya-jawab dengan Gemini; data senyawa yang sedang dibahas ikut dikirim.
+- **Chesty:** maskot asisten kimia (Gemini); data senyawa yang sedang dibahas ikut dikirim.
+- **Ganti akun & foto profil:** beberapa akun bisa diingat di satu perangkat; foto profil bisa digeser dan di-zoom sebelum disimpan.
+- **Laporan:** hasil penemuan bisa diunduh sebagai Excel (2 sheet: ringkasan & hasil) atau JSON rapi.
 - **Akun:** daftar, masuk, lupa password lewat email, ubah profil, hapus akun.
 - **Admin:** statistik pemakaian dan kelola akun (peran, nonaktifkan, hapus).
 - **Batas AI harian per pengguna** dan mode terang/gelap.
@@ -23,7 +25,7 @@ Dibuat oleh Faris Jihadi Hanif Lubis.
 
 ```
 ml-service/  Python + FastAPI: RDKit, model Random Forest, pustaka PubChem, pembuat kandidat
-api/         Node.js + Express + MongoDB: akun, penemuan, riwayat, favorit, asisten (Gemini), admin
+api/         Node.js + Express + MongoDB: akun, penemuan, riwayat, favorit, Chesty (Gemini), admin
 web/         React + Vite + Tailwind
 mobile/      Flutter (Android & iOS)
 deploy/      Konfigurasi PM2, Nginx, dan skrip backup
@@ -73,9 +75,26 @@ cd web && npm install && npm run dev
 cd mobile
 flutter pub get
 flutter run                                   # emulator Android memanggil API di 10.0.2.2:4100
-flutter run --dart-define=API_URL=http://192.168.1.10:4100   # HP asli di Wi-Fi yang sama
+flutter run -d chrome                         # API (mode dev) menerima localhost port berapa pun
+flutter run -d <id-hp> --dart-define=API_URL=http://192.168.1.10:4100   # HP asli, Wi-Fi yang sama
 flutter build apk --release --dart-define=API_URL=https://domainmu.id
 ```
+
+HP asli lewat kabel USB:
+
+1. Pasang Android Studio sekali (untuk Android SDK), lalu `flutter doctor --android-licenses`.
+2. Di HP: Pengaturan → Tentang ponsel → ketuk *Nomor bentukan* 7x → Opsi pengembang → nyalakan **USB debugging** (Xiaomi: juga *Install via USB*). Terima pop-up izin saat kabel dicolok.
+3. `flutter devices` harus menampilkan HP-mu. Pakai IPv4 laptop dari `ipconfig` sebagai `API_URL`, dan izinkan Node di Windows Firewall (Private network).
+
+Menambah data eksperimen dari CSV/Kaggle (kolom SMILES + kolom nilai):
+
+```bash
+cd ml-service
+python scripts/import_dataset.py --kaggle pemilik/nama-dataset --file data.csv --smiles SMILES --kolom bp --sifat boiling_point --satuan K
+python scripts/train.py      # latih ulang, lalu restart ml-service
+```
+
+Token Kaggle (`kaggle.json`) diletakkan di `C:\Users\<nama>\.kaggle\kaggle.json`.
 
 Build iOS butuh Mac dengan Xcode (`flutter build ipa --dart-define=API_URL=https://domainmu.id`).
 
@@ -83,7 +102,7 @@ Build iOS butuh Mac dengan Xcode (`flutter build ipa --dart-define=API_URL=https
 
 ```bash
 cd ml-service && python -m pytest tests -q   # parser, skor, kandidat, endpoint
-cd api && npm test                           # akun, penemuan, favorit, asisten, admin, lupa password
+cd api && npm test                           # akun, ganti akun, foto, penemuan, laporan, Chesty, admin
 cd web && npm run lint && npm run build
 cd mobile && flutter analyze && flutter test
 ```

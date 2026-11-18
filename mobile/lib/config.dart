@@ -7,6 +7,8 @@ const String _fromEnv = String.fromEnvironment('API_URL');
 
 String get apiBase {
   if (_fromEnv.isNotEmpty) return _fromEnv.replaceAll(RegExp(r'/+$'), '');
-  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) return 'http://10.0.2.2:4100';
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    return 'http://10.0.2.2:4100';
+  }
   return 'http://localhost:4100';
 }

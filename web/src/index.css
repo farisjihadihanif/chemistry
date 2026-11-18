@@ -84,3 +84,16 @@
 
 /* Gambar struktur RDKit: garis mengikuti warna tinta */
 .structure svg { width: 100%; height: 100%; }
+
+/* Chesty melompat kecil setiap beberapa detik */
+@keyframes chesty-hop {
+  0%, 62%, 100% { transform: translateY(0) scaleY(1); }
+  66% { transform: translateY(2px) scaleY(0.94); }
+  74% { transform: translateY(-16px) scaleY(1.03); }
+  82% { transform: translateY(0) scaleY(0.97); }
+  86% { transform: translateY(-5px); }
+  90% { transform: translateY(0); }
+}
+.chesty-hop { animation: chesty-hop 2.8s ease-in-out infinite; transform-origin: bottom center; }
+.group:hover .chesty-hop { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .chesty-hop { animation: none; } }

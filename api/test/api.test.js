@@ -48,19 +48,34 @@ test("penemuan mode form: kriteria divalidasi, hasil + alasan cadangan tanpa AI"
     assert.equal(d.known[0].name, "Ethanol");
     assert.match(d.known[0].alasan, /Memenuhi kriteria titik didih/);
     assert.equal(d.known[0].alasanSumber, "data");
-    assert.match(d.novel[0].alasan, /perkiraan model/);
+    assert.match(d.novel[0].alasan, /masih perkiraan, perlu diuji/);
     assert.equal(d.aiDipakai, false);
     // riwayat
     const list = (await u.get("/api/discoveries").expect(200)).body;
     assert.equal(list.total, 1);
     assert.equal(list.items[0].top[0].name, "Ethanol");
-    // ekspor
-    const csv = await u.get(`/api/discoveries/${d._id}/export?format=csv`).expect(200);
-    assert.match(csv.headers["content-type"], /text\/csv/);
-    assert.match(csv.text, /dikenal,100,Ethanol,702,C2H6O,CCO/);
-    assert.match(csv.text, /kandidat_baru,92,,1031/);
+    // ekspor Excel & JSON rapi
+    const xl = await u.get(`/api/discoveries/${d._id}/export?format=xlsx`).buffer(true).parse((res, cb) => {
+      const chunks = [];
+      res.on("data", (c) => chunks.push(c));
+      res.on("end", () => cb(null, Buffer.concat(chunks)));
+    }).expect(200);
+    assert.match(xl.headers["content-type"], /spreadsheetml/);
+    const ExcelJS = require("exceljs");
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(xl.body);
+    assert.deepEqual(wb.worksheets.map((w) => w.name), ["Ringkasan", "Hasil"]);
+    const hasil = wb.getWorksheet("Hasil");
+    assert.equal(hasil.getRow(3).getCell(2).value, "Nama senyawa");
+    assert.equal(hasil.getRow(4).getCell(2).value, "Ethanol");
+    assert.equal(hasil.getRow(5).getCell(4).value, "Kandidat baru");
     const js = await u.get(`/api/discoveries/${d._id}/export?format=json`).expect(200);
-    assert.equal(js.body.senyawaDikenal.length, 1);
+    const rep = JSON.parse(js.text);
+    assert.equal(rep.laporan, "Laporan Penemuan Senyawa");
+    assert.deepEqual(rep.kriteria[0], { sifat: "Titik didih", satuan: "°C", minimum: 60, maksimum: 160, kepentingan: "Sangat penting" });
+    assert.deepEqual(rep.senyawaDikenal[0].sifat["Titik didih"], { nilai: 78.3, satuan: "°C", jenis: "eksperimen" });
+    assert.equal(rep.kandidatBaru[0].sifat["Titik didih"].jenis, "perkiraan");
+    assert.doesNotMatch(js.text, /pubchem|cid/i);
     // milik orang lain tidak bisa dibuka
     const other = await h.makeUser(app, "lain");
     await other.get(`/api/discoveries/${d._id}`).expect(404);
@@ -207,6 +222,36 @@ test("lupa password: email berisi link, token sekali pakai", async () => {
     config.smtp.user = "";
     config.smtp.pass = "";
   }
+});
+
+test("ganti akun: sesi tersimpan di perangkat, keluar tidak melupakan akun", async () => {
+  await h.makeUser(app, "satu");
+  await h.makeUser(app, "dua");
+  const agent = h.request.agent(app);
+  await agent.post("/api/auth/login").send({ identifier: "satu", password: "rahasia123" }).expect(200);
+  await agent.post("/api/auth/login").send({ identifier: "dua", password: "rahasia123" }).expect(200);
+  const acc = (await agent.get("/api/auth/accounts")).body.accounts;
+  assert.deepEqual(acc.map((a) => a.username).sort(), ["dua", "satu"]);
+  const satu = acc.find((a) => a.username === "satu");
+  const sw = await agent.post("/api/auth/switch").send({ userId: satu._id }).expect(200);
+  assert.equal(sw.body.user.username, "satu");
+  assert.equal((await agent.get("/api/auth/me")).body.user.username, "satu");
+  await agent.post("/api/auth/logout").expect(200);
+  assert.equal((await agent.get("/api/auth/accounts")).body.accounts.length, 2);
+  await agent.post("/api/auth/accounts/forget").send({ userId: satu._id }).expect(200);
+  assert.deepEqual((await agent.get("/api/auth/accounts")).body.accounts.map((a) => a.username), ["dua"]);
+});
+
+test("foto profil: unggah, tampil di profil, hapus", async () => {
+  const u = await h.makeUser(app, "foto");
+  const png = Buffer.concat([Buffer.from("89504e470d0a1a0a", "hex"), Buffer.alloc(200, 1)]);
+  await u.put("/api/users/me/foto").set("Content-Type", "image/png").send(Buffer.from("bukan gambar sama sekali, hanya teks panjang ".repeat(5))).expect(400);
+  const r = await u.put("/api/users/me/foto").set("Content-Type", "image/png").send(png).expect(200);
+  assert.match(r.body.user.foto, /^\/api\/avatars\/[a-f0-9]{24}\?v=1$/);
+  const img = await h.request(app).get(r.body.user.foto).expect(200);
+  assert.equal(img.headers["content-type"], "image/png");
+  await u.delete("/api/users/me/foto").expect(200);
+  assert.equal((await u.get("/api/auth/me")).body.user.foto, "");
 });
 
 test("data bahaya GHS dari PubChem diurai & disimpan", async () => {

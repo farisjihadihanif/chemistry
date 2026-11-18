@@ -3,7 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'api.dart';
 
-String keyOf(Json c) => c['cid'] != null ? 'cid:${c['cid']}' : 'smi:${c['smiles'] ?? ''}';
+String keyOf(Json c) =>
+    c['cid'] != null ? 'cid:${c['cid']}' : 'smi:${c['smiles'] ?? ''}';
 
 /// Keadaan aplikasi: akun, metadata sifat dari server, favorit, daftar bandingkan, tema.
 class AppState extends ChangeNotifier {
@@ -12,6 +13,7 @@ class AppState extends ChangeNotifier {
   String? metaError;
   bool ready = false;
   Set<String> favKeys = {};
+  List<Json> accounts = [];
   final List<Json> compare = [];
   ThemeMode themeMode = ThemeMode.system;
 
@@ -20,7 +22,11 @@ class AppState extends ChangeNotifier {
   Future<void> init() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      themeMode = switch (prefs.getString('theme')) { 'dark' => ThemeMode.dark, 'light' => ThemeMode.light, _ => ThemeMode.system };
+      themeMode = switch (prefs.getString('theme')) {
+        'dark' => ThemeMode.dark,
+        'light' => ThemeMode.light,
+        _ => ThemeMode.system,
+      };
     } catch (_) {}
     await api.loadToken();
     await loadMeta();
@@ -32,7 +38,11 @@ class AppState extends ChangeNotifier {
         // offline: tetap tampilkan layar masuk
       }
     }
-    if (user != null) await loadFavKeys();
+    if (user != null) {
+      await api.rememberAccount(user!, api.token!);
+      await loadFavKeys();
+    }
+    accounts = await api.savedAccounts();
     ready = true;
     notifyListeners();
   }
@@ -58,18 +68,30 @@ class AppState extends ChangeNotifier {
   Future<void> _signedIn(Json r) async {
     await api.setToken(r['token'] as String?);
     user = r['user'] as Json;
+    compare.clear();
+    if (api.token != null) await api.rememberAccount(user!, api.token!);
+    accounts = await api.savedAccounts();
     await loadFavKeys();
     if (meta == null) await loadMeta();
     notifyListeners();
   }
 
-  Future<void> login(String id, String password) async => _signedIn(await api.post('/auth/login', {'identifier': id, 'password': password}) as Json);
-  Future<void> register(Json data) async => _signedIn(await api.post('/auth/register', data) as Json);
+  Future<void> login(String id, String password) async => _signedIn(
+    await api.post('/auth/login', {'identifier': id, 'password': password})
+        as Json,
+  );
+  Future<void> register(Json data) async =>
+      _signedIn(await api.post('/auth/register', data) as Json);
 
-  Future<void> logout() async {
+  /// Keluar dari akun ini. Akun tetap diingat (tanpa token) supaya bisa dipilih lagi,
+  /// kecuali [forget] = true.
+  Future<void> logout({bool forget = false}) async {
+    final id = user?['_id'] as String?;
     try {
       await api.post('/auth/logout');
     } catch (_) {}
+    if (id != null) await api.forgetAccount(id);
+    accounts = await api.savedAccounts();
     await api.setToken(null);
     user = null;
     favKeys = {};
@@ -79,6 +101,53 @@ class AppState extends ChangeNotifier {
 
   void setUser(Json u) {
     user = u;
+    if (api.token != null) {
+      api
+          .rememberAccount(u, api.token!)
+          .then((_) async => accounts = await api.savedAccounts());
+    }
+    notifyListeners();
+  }
+
+  List<Json> get otherAccounts =>
+      accounts.where((a) => a['user']?['_id'] != user?['_id']).toList();
+
+  /// Pindah ke akun tersimpan. Gagal bila sesinya sudah berakhir (akun lalu dilupakan).
+  Future<void> switchAccount(Json account) async {
+    final previous = api.token;
+    await api.setToken(account['token'] as String?);
+    try {
+      final u = (await api.get('/auth/me'))['user'] as Json?;
+      if (u == null) {
+        throw ApiException(
+          401,
+          'Sesi akun itu sudah berakhir. Masuk lagi dengan password-nya.',
+        );
+      }
+      user = u;
+      compare.clear();
+      favKeys = {};
+      await api.rememberAccount(u, api.token!);
+      accounts = await api.savedAccounts();
+      await loadFavKeys();
+      notifyListeners();
+    } catch (e) {
+      await api.setToken(previous);
+      await api.forgetAccount(account['user']?['_id'] as String? ?? '');
+      accounts = await api.savedAccounts();
+      notifyListeners();
+      throw e is ApiException
+          ? e
+          : ApiException(
+              401,
+              'Sesi akun itu sudah berakhir. Masuk lagi dengan password-nya.',
+            );
+    }
+  }
+
+  Future<void> forgetAccount(String id) async {
+    await api.forgetAccount(id);
+    accounts = await api.savedAccounts();
     notifyListeners();
   }
 
@@ -120,23 +189,42 @@ class AppState extends ChangeNotifier {
     notifyListeners();
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('theme', m == ThemeMode.dark ? 'dark' : m == ThemeMode.light ? 'light' : 'system');
+      await prefs.setString(
+        'theme',
+        m == ThemeMode.dark
+            ? 'dark'
+            : m == ThemeMode.light
+            ? 'light'
+            : 'system',
+      );
     } catch (_) {}
   }
 
   // ---- metadata sifat ----
-  String label(String k) => ((meta?['targets']?[k] ?? meta?['computed']?[k])?['label'] ?? k).toString();
-  String unit(String k) => ((meta?['targets']?[k] ?? meta?['computed']?[k])?['unit'] ?? '').toString();
+  String label(String k) =>
+      ((meta?['targets']?[k] ?? meta?['computed']?[k])?['label'] ?? k)
+          .toString();
+  String unit(String k) =>
+      ((meta?['targets']?[k] ?? meta?['computed']?[k])?['unit'] ?? '')
+          .toString();
   bool isLog(String k) => meta?['targets']?[k]?['log'] == true;
-  List<String> get allKeys => [...((meta?['targets'] as Map?)?.keys.cast<String>() ?? const []), ...((meta?['computed'] as Map?)?.keys.cast<String>() ?? const [])];
+  List<String> get allKeys => [
+    ...((meta?['targets'] as Map?)?.keys.cast<String>() ?? const []),
+    ...((meta?['computed'] as Map?)?.keys.cast<String>() ?? const []),
+  ];
   List<Json> get groups => ((meta?['groups'] as List?) ?? []).cast<Json>();
-  String groupLabel(String id) => groups.firstWhere((g) => g['id'] == id, orElse: () => {'label': id})['label'].toString();
+  String groupLabel(String id) => groups
+      .firstWhere((g) => g['id'] == id, orElse: () => {'label': id})['label']
+      .toString();
 }
 
 class AppScope extends InheritedNotifier<AppState> {
-  const AppScope({super.key, required AppState state, required super.child}) : super(notifier: state);
-  static AppState of(BuildContext context) => context.dependOnInheritedWidgetOfExactType<AppScope>()!.notifier!;
-  static AppState read(BuildContext context) => context.getInheritedWidgetOfExactType<AppScope>()!.notifier!;
+  const AppScope({super.key, required AppState state, required super.child})
+    : super(notifier: state);
+  static AppState of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<AppScope>()!.notifier!;
+  static AppState read(BuildContext context) =>
+      context.getInheritedWidgetOfExactType<AppScope>()!.notifier!;
 }
 
 void toast(BuildContext context, String msg) {

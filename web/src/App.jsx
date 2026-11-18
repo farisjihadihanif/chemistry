@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { AuthProvider } from "./context/Auth";
@@ -46,13 +46,15 @@ export default function App() {
                   <Route path="riwayat" element={auth(<History />)} />
                   <Route path="favorit" element={auth(<Favorites />)} />
                   <Route path="kalkulator" element={auth(<Calculator />)} />
-                  <Route path="asisten" element={auth(<Assistant />)} />
+                  <Route path="chesty" element={auth(<Assistant />)} />
+                  <Route path="asisten" element={<Navigate to="/chesty" replace />} />
                   <Route path="akun" element={auth(<Account />)} />
                   <Route path="admin" element={auth(<Admin />, true)} />
                   <Route path="senyawa/:cid" element={<Compound />} />
                   <Route path="pustaka" element={<Library />} />
                   <Route path="bandingkan" element={<Compare />} />
-                  <Route path="data" element={<DataModel />} />
+                  <Route path="tentang" element={<DataModel />} />
+                  <Route path="data" element={<Navigate to="/tentang" replace />} />
                   <Route path="ketentuan" element={<Terms />} />
                   <Route path="privasi" element={<Privacy />} />
                   <Route path="masuk" element={<Login />} />

@@ -22,7 +22,8 @@ class Library:
         self.df = pd.read_csv(csv).reset_index(drop=True)
         self.predictor = predictor
         self.by_smiles = {s: i for i, s in enumerate(self.df.smiles)}
-        self.by_cid = {int(c): i for i, c in enumerate(self.df.cid)}
+        # Senyawa dari impor dataset lain bisa tanpa CID.
+        self.by_cid = {int(c): i for i, c in enumerate(self.df.cid) if pd.notna(c)}
         mols = [mol_from_smiles(s) for s in self.df.smiles]
         self.inchikeys = {Chem.MolToInchiKey(m): i for i, m in enumerate(mols) if m is not None}
         self.groups = [groups.find(m) for m in mols]
@@ -64,7 +65,7 @@ class Library:
     def summary(self, i: int):
         row = self.df.iloc[i]
         return {
-            "cid": int(row.cid),
+            "cid": int(row.cid) if pd.notna(row.cid) else None,
             "name": row["name"] if isinstance(row["name"], str) else "",
             "iupac": row.iupac if isinstance(row.iupac, str) else "",
             "formula": row.formula,
@@ -93,7 +94,7 @@ class Library:
         names = self.df["name"].fillna("").str.lower()
         hit = names.str.contains(q, regex=False) | (self.df.formula.str.lower() == q)
         if q.isdigit():
-            hit |= self.df.cid == int(q)
+            hit |= self.df.cid.fillna(-1) == int(q)
         idx = self.df.index[hit]
         # nama yang diawali kata kunci didahulukan, lalu nama terpendek
         order = sorted(idx, key=lambda i: (not names[i].startswith(q), len(names[i])))

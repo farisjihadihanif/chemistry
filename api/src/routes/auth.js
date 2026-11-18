@@ -5,7 +5,8 @@ const rateLimit = require("express-rate-limit");
 const config = require("../config");
 const User = require("../models/User");
 const mail = require("../services/mail");
-const { issueToken, clearToken } = require("../middleware/auth");
+const jwt = require("jsonwebtoken");
+const { issueToken, clearToken, readAccounts, writeAccounts, subOf, cookieOptions, COOKIE } = require("../middleware/auth");
 const { HttpError } = require("../middleware/errors");
 const { str } = require("../util");
 
@@ -24,7 +25,7 @@ router.post("/register", limiter, async (req, res) => {
   if (password.length < 8) throw new HttpError(400, "Password minimal 8 karakter.");
   if (!namaLengkap) throw new HttpError(400, "Nama lengkap wajib diisi.");
   const user = await User.create({ username, email, namaLengkap, institusi: str(req.body.institusi, 150), password: await bcrypt.hash(password, 10), lastLoginAt: new Date() });
-  const token = issueToken(res, user);
+  const token = issueToken(res, user, req);
   res.status(201).json({ user: user.toSelf(), token });
 });
 
@@ -36,12 +37,57 @@ router.post("/login", limiter, async (req, res) => {
   if (!user.aktif) throw new HttpError(403, "Akun ini dinonaktifkan admin. Hubungi admin untuk mengaktifkannya.");
   user.lastLoginAt = new Date();
   await user.save();
-  const token = issueToken(res, user);
+  const token = issueToken(res, user, req);
   res.json({ user: user.toSelf(), token });
 });
 
+// Keluar dari akun ini. Akun tetap tersimpan di perangkat untuk "Ganti akun",
+// kecuali diminta dilupakan ({ forget: true }).
 router.post("/logout", (req, res) => {
-  clearToken(res);
+  const current = req.cookies?.[COOKIE];
+  const keep = !req.body?.forget && req.user && current;
+  clearToken(res, req, { forget: !keep });
+  if (keep) writeAccounts(res, [...readAccounts(req).filter((t) => subOf(t) !== String(req.user._id)), current]);
+  res.json({ ok: true });
+});
+
+// Daftar akun yang tersimpan di perangkat ini (token kedaluwarsa, password diganti, atau akun nonaktif otomatis hilang).
+async function validAccounts(req) {
+  const out = [];
+  const current = req.cookies?.[COOKIE];
+  const tokens = readAccounts(req);
+  if (current && !tokens.some((t) => subOf(t) === subOf(current))) tokens.push(current);
+  for (const token of tokens) {
+    try {
+      const p = jwt.verify(token, config.jwtSecret);
+      const user = await User.findById(p.sub);
+      if (user && user.aktif && (user.tokenVersion || 0) === (p.v || 0)) out.push({ token, user });
+    } catch {
+      /* lewati token rusak */
+    }
+  }
+  return out;
+}
+
+router.get("/accounts", async (req, res) => {
+  const list = await validAccounts(req);
+  writeAccounts(res, list.map((a) => a.token));
+  res.json({ accounts: list.map(({ user }) => ({ ...user.toPublic(), current: Boolean(req.user && String(req.user._id) === String(user._id)) })) });
+});
+
+router.post("/switch", async (req, res) => {
+  const id = String(req.body.userId || "");
+  const found = (await validAccounts(req)).find((a) => String(a.user._id) === id);
+  if (!found) throw new HttpError(401, "Akun itu perlu masuk ulang.");
+  res.cookie(COOKIE, found.token, cookieOptions());
+  res.json({ user: found.user.toSelf(), token: found.token });
+});
+
+// Hapus satu akun dari daftar perangkat.
+router.post("/accounts/forget", async (req, res) => {
+  const id = String(req.body.userId || "");
+  const rest = (await validAccounts(req)).filter((a) => String(a.user._id) !== id);
+  writeAccounts(res, rest.map((a) => a.token));
   res.json({ ok: true });
 });
 
@@ -97,8 +143,8 @@ router.post("/reset", resetLimiter, async (req, res) => {
   user.resetTokenHash = undefined;
   user.resetTokenExpires = undefined;
   await user.save();
-  const jwt = issueToken(res, user);
-  res.json({ user: user.toSelf(), token: jwt });
+  const sessionToken = issueToken(res, user, req);
+  res.json({ user: user.toSelf(), token: sessionToken });
 });
 
 module.exports = router;

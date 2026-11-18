@@ -116,7 +116,7 @@ async def analyze(req: AnalyzeReq):
         else:
             found = await pubchem.by_name(req.name.strip())
             if not found or not found.get("smiles"):
-                raise HTTPException(404, f'Senyawa "{req.name}" tidak ditemukan di PubChem.')
+                raise HTTPException(404, f'Senyawa "{req.name}" tidak ditemukan. Coba nama dalam bahasa Inggris atau SMILES.')
             smiles = found["smiles"]
     if not smiles:
         raise HTTPException(400, "Isi SMILES atau nama senyawa.")

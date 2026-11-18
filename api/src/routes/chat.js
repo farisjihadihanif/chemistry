@@ -33,7 +33,7 @@ router.delete("/:id", async (req, res) => {
 
 function compoundContext(c) {
   const lines = Object.entries(c.properties || {}).map(([k, p]) => `${k}: ${Number(p.value).toPrecision(4)} (${p.source})`);
-  return `Senyawa yang sedang dibahas: ${c.name || "kandidat tanpa nama"}, rumus ${c.formula}, SMILES ${c.smiles}${c.cid ? `, PubChem CID ${c.cid}` : ""}.\nData dari aplikasi (eksperimen = PubChem, prediksi = model Random Forest):\n${lines.join("\n")}`;
+  return `Senyawa yang sedang dibahas: ${c.name || "kandidat tanpa nama"}, rumus ${c.formula}, SMILES ${c.smiles}.\nData dari aplikasi (eksperimen = data terukur, prediksi = nilai perkiraan):\n${lines.join("\n")}`;
 }
 
 router.post("/", limiter, checkQuota, async (req, res) => {

@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, X } from "lucide-react";
 import { useAuth } from "../context/Auth";
 import { api } from "../lib/api";
-import { ErrorBox } from "../components/ui";
-import { Logo } from "../components/Logo";
+import { Avatar, ErrorBox } from "../components/ui";
+import { displayName } from "../lib/format";
+import { LogoMark } from "../components/Logo";
 
 const safeNext = (n) => (n && n.startsWith("/") && !n.startsWith("//") ? n : "/temukan");
 
@@ -12,7 +13,7 @@ function Shell({ title, children, footer }) {
   return (
     <div className="grid min-h-[calc(100vh-3.5rem)] place-items-center px-4 py-10">
       <div className="w-full max-w-sm">
-        <Logo size={30} wordmark={false} />
+        <LogoMark size={40} />
         <h1 className="mt-4 text-2xl font-semibold">{title}</h1>
         <div className="mt-6">{children}</div>
         {footer && <p className="mt-6 text-sm text-ink-soft">{footer}</p>}
@@ -36,15 +37,54 @@ function PasswordField({ id, value, onChange, autoComplete, label = "Password" }
   );
 }
 
+function SavedAccounts({ onPick }) {
+  const { accounts, user, forgetAccount } = useAuth();
+  const list = accounts.filter((a) => !user || String(a._id) !== String(user._id));
+  if (!list.length) return null;
+  return (
+    <div className="mb-5">
+      <p className="mb-2 text-sm font-semibold text-ink-soft">Akun di perangkat ini</p>
+      <ul className="divide-y divide-line rounded-lg border border-line bg-surface">
+        {list.map((a) => (
+          <li key={a._id} className="flex items-center">
+            <button type="button" onClick={() => onPick(a)} className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2.5 text-left hover:bg-sunk">
+              <Avatar user={a} size={32} />
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold">{displayName(a)}</span>
+                <span className="block truncate text-xs text-ink-mute">@{a.username}</span>
+              </span>
+            </button>
+            <button type="button" onClick={() => forgetAccount(a._id)} className="mr-2 rounded p-1.5 text-ink-mute hover:bg-sunk hover:text-ink" aria-label={`Hapus @${a.username} dari perangkat ini`} title="Hapus dari perangkat ini">
+              <X size={14} />
+            </button>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-4 text-center text-xs text-ink-mute">atau masuk dengan akun lain</p>
+    </div>
+  );
+}
+
 export function Login() {
-  const { user, login } = useAuth();
+  const { user, login, switchAccount } = useAuth();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const [form, setForm] = useState({ identifier: "", password: "" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const next = safeNext(params.get("next"));
-  if (user) return <Navigate to={next} replace />;
+  const adding = params.get("tambah") === "1";
+  if (user && !adding) return <Navigate to={next} replace />;
+  const pick = async (a) => {
+    setError("");
+    try {
+      await switchAccount(a._id);
+      navigate(next, { replace: true });
+    } catch {
+      setForm((f) => ({ ...f, identifier: a.username }));
+      setError("Sesi akun itu sudah berakhir. Masukkan password-nya lagi.");
+    }
+  };
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true);
@@ -58,7 +98,8 @@ export function Login() {
     }
   };
   return (
-    <Shell title="Masuk" footer={<>Belum punya akun? <Link to={`/daftar?next=${encodeURIComponent(next)}`} className="font-semibold text-cobalt hover:underline">Daftar</Link></>}>
+    <Shell title={adding ? "Tambah akun" : "Masuk"} footer={<>Belum punya akun? <Link to={`/daftar?next=${encodeURIComponent(next)}`} className="font-semibold text-cobalt hover:underline">Daftar</Link></>}>
+      <SavedAccounts onPick={pick} />
       <form onSubmit={submit} className="space-y-4">
         <div>
           <label className="label" htmlFor="identifier">Username atau email</label>

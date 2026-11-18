@@ -4,6 +4,9 @@ const User = require("../models/User");
 const { HttpError } = require("./errors");
 
 const COOKIE = "token";
+// Akun lain yang pernah masuk di perangkat ini (untuk "Ganti akun"), maksimal 5.
+const ACCOUNTS = "accounts";
+const MAX_ACCOUNTS = 5;
 
 function cookieOptions() {
   return {
@@ -15,18 +18,63 @@ function cookieOptions() {
   };
 }
 
-const sign = (user) => jwt.sign({ sub: String(user._id), v: user.tokenVersion || 0 }, config.jwtSecret, { expiresIn: `${config.jwtDays}d` });
+function sign(user) {
+  return jwt.sign({ sub: String(user._id), v: user.tokenVersion || 0 }, config.jwtSecret, { expiresIn: `${config.jwtDays}d` });
+}
 
-// Web memakai cookie httpOnly; aplikasi mobile memakai token di header Authorization.
-function issueToken(res, user) {
+function readAccounts(req) {
+  try {
+    const list = JSON.parse(req.cookies?.[ACCOUNTS] || "[]");
+    return Array.isArray(list) ? list.filter((t) => typeof t === "string").slice(0, MAX_ACCOUNTS) : [];
+  } catch {
+    return [];
+  }
+}
+
+function subOf(token) {
+  try {
+    return jwt.verify(token, config.jwtSecret).sub;
+  } catch {
+    return null;
+  }
+}
+
+function writeAccounts(res, tokens) {
+  const seen = new Set();
+  const list = [];
+  for (const t of tokens) {
+    const sub = subOf(t);
+    if (sub && !seen.has(sub)) {
+      seen.add(sub);
+      list.push(t);
+    }
+  }
+  if (list.length) res.cookie(ACCOUNTS, JSON.stringify(list.slice(-MAX_ACCOUNTS)), cookieOptions());
+  else {
+    const { maxAge, ...opts } = cookieOptions();
+    res.clearCookie(ACCOUNTS, opts);
+  }
+  return list;
+}
+
+// Masuk sebagai user ini, dan ingat akunnya di daftar akun perangkat.
+function issueToken(res, user, req = null) {
   const token = sign(user);
   res.cookie(COOKIE, token, cookieOptions());
+  if (req) {
+    // Akun yang sedang dipakai sebelum ini ikut diingat, supaya bisa dipilih lagi lewat "Ganti akun".
+    const current = req.cookies?.[COOKIE];
+    const others = [...readAccounts(req), ...(current ? [current] : [])].filter((t) => subOf(t) !== String(user._id));
+    writeAccounts(res, [...others, token]);
+  }
   return token;
 }
 
-function clearToken(res) {
+// forget=false: keluar tapi akun tetap ada di daftar perangkat (masuk lagi sekali klik).
+function clearToken(res, req = null, { forget = true } = {}) {
   const { maxAge, ...opts } = cookieOptions();
   res.clearCookie(COOKIE, opts);
+  if (req && forget && req.user) writeAccounts(res, readAccounts(req).filter((t) => subOf(t) !== String(req.user._id)));
 }
 
 async function loadUser(req, res, next) {
@@ -56,4 +104,4 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-module.exports = { issueToken, clearToken, loadUser, requireAuth, requireAdmin, sign, COOKIE };
+module.exports = { issueToken, clearToken, loadUser, requireAuth, requireAdmin, sign, readAccounts, writeAccounts, subOf, cookieOptions, COOKIE };

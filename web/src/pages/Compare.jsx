@@ -72,7 +72,7 @@ export default function Compare() {
           </tbody>
         </table>
       </div>
-      <p className="mt-4 text-xs text-ink-mute">Bulat penuh = data eksperimen PubChem, bulat kosong = prediksi model.</p>
+      <p className="mt-4 text-xs text-ink-mute">Bulat penuh = data eksperimen, bulat kosong = nilai perkiraan.</p>
     </div>
   );
 }

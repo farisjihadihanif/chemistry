@@ -1,5 +1,5 @@
 // Pemanggil API. Cookie login ikut terkirim (credentials: include).
-const BASE = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+export const BASE = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
 export class ApiError extends Error {
   constructor(status, message) {
@@ -41,3 +41,18 @@ export const structureUrl = (smiles, { w = 320, h = 240, dark = false } = {}) =>
   `${BASE}/api/structure.svg?${new URLSearchParams({ smiles, w: String(w), h: String(h), ...(dark ? { dark: "1" } : {}) })}`;
 
 export const exportUrl = (id, format) => `${BASE}/api/discoveries/${id}/export?format=${format}`;
+
+export const assetUrl = (path) => (path && path.startsWith("/") ? `${BASE}${path}` : path);
+
+// Unggah foto profil sebagai body mentah (JPEG hasil crop).
+export async function uploadAvatar(file) {
+  let res;
+  try {
+    res = await fetch(`${BASE}/api/users/me/foto`, { method: "PUT", credentials: "include", headers: { "Content-Type": file.type || "image/jpeg" }, body: file });
+  } catch {
+    throw new ApiError(0, "Tidak bisa terhubung ke server. Periksa koneksi internetmu.");
+  }
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new ApiError(res.status, data?.message || "Foto gagal diunggah.");
+  return data;
+}

@@ -28,10 +28,10 @@ class ChemistryApp extends StatelessWidget {
       darkTheme: buildTheme(Brightness.dark),
       themeMode: st.themeMode,
       home: !st.ready
-          ? const Scaffold(body: Center(child: Logo(size: 40)))
+          ? const Scaffold(body: Center(child: LogoMark(size: 56)))
           : st.user == null
-              ? const AuthScreen()
-              : const Shell(),
+          ? const AuthScreen()
+          : const Shell(),
     );
   }
 }
@@ -44,21 +44,55 @@ class Shell extends StatefulWidget {
 
 class _ShellState extends State<Shell> {
   int index = 0;
-  static const _pages = [DiscoverScreen(), CalculatorScreen(), LibraryScreen(), AssistantScreen(), AccountScreen()];
+  static const _pages = [
+    DiscoverScreen(),
+    CalculatorScreen(),
+    LibraryScreen(),
+    AssistantScreen(),
+    AccountScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: index, children: _pages),
+      body: Stack(
+        children: [
+          IndexedStack(index: index, children: _pages),
+          if (index != 3)
+            Positioned(
+              right: 12,
+              bottom: 12,
+              child: SafeArea(
+                child: FloatingChesty(onTap: () => setState(() => index = 3)),
+              ),
+            ),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
         onDestinationSelected: (i) => setState(() => index = i),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.search), label: 'Temukan'),
-          NavigationDestination(icon: Icon(Icons.science_outlined), selectedIcon: Icon(Icons.science), label: 'Kalkulator'),
-          NavigationDestination(icon: Icon(Icons.menu_book_outlined), selectedIcon: Icon(Icons.menu_book), label: 'Pustaka'),
-          NavigationDestination(icon: Icon(Icons.chat_bubble_outline), selectedIcon: Icon(Icons.chat_bubble), label: 'Asisten'),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Akun'),
+          NavigationDestination(
+            icon: Icon(Icons.science_outlined),
+            selectedIcon: Icon(Icons.science),
+            label: 'Kalkulator',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.menu_book_outlined),
+            selectedIcon: Icon(Icons.menu_book),
+            label: 'Pustaka',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.chat_bubble_outline),
+            selectedIcon: Icon(Icons.chat_bubble),
+            label: 'Chesty',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Akun',
+          ),
         ],
       ),
     );
