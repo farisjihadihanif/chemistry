@@ -113,6 +113,8 @@ def main():
         v = float(np.median(vs))
         if k in keys:
             i = keys[k]
+            if names.get(k) and not (isinstance(lib.at[i, "name"], str) and lib.at[i, "name"].strip()):
+                lib.at[i, "name"] = names[k]
             if pd.isna(lib.at[i, col]):
                 lib.at[i, col] = v
                 filled += 1
