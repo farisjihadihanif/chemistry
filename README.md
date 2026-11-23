@@ -51,6 +51,10 @@ Browser dan aplikasi mobile hanya berbicara dengan `api`. `ml-service` adalah la
   | Tegangan permukaan     | 276   | 4,4 mN/m   | 0,57 |
   | Suhu penyalaan sendiri | 705   | 68 °C      | 0,40 |
 
+## Website
+
+Deploy Website on: https://chamistry.vercel.app/
+
 ## Copyright
 
 © 2026 Faris Jihadi Hanif Lubis. All rights reserved.
