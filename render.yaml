@@ -7,7 +7,7 @@ services:
     region: singapore
     rootDir: ml-service
     # Melatih model dan menyiapkan cache pustaka saat build; keduanya tidak disimpan di git.
-    buildCommand: pip install --only-binary=:all: -r requirements.txt -c constraints.txt && python scripts/train.py && python scripts/warm.py
+    buildCommand: "pip install --only-binary=:all: -r requirements.txt -c constraints.txt && python scripts/train.py && python scripts/warm.py"
     startCommand: python -m uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1
     healthCheckPath: /health # tidak memuat model
     buildFilter:
