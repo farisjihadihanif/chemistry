@@ -32,10 +32,10 @@ async function connect(url) {
 // Pesan yang lebih jelas untuk kesalahan umum.
 function explain(error) {
   const msg = String(error?.message || error);
-  if (/bad auth|authentication failed/i.test(msg)) return new Error("Username/password MongoDB di MONGO_URL salah. Cek lagi password user database di Atlas.");
-  if (/127\.0\.0\.1:27017|localhost:27017/.test(msg)) return new Error("MongoDB lokal tidak jalan. Install MongoDB atau pakai MONGO_URL dari Atlas.");
-  if (/querySrv/.test(msg)) return new Error(`${msg}\nDNS jaringan memblokir alamat Atlas. Coba ganti DNS Windows ke 1.1.1.1 / 8.8.8.8, atau pakai jaringan lain (hotspot HP).`);
-  if (/Server selection timed out|ReplicaSetNoPrimary|whitelist|IP/i.test(msg)) return new Error(`${msg}\nKemungkinan IP-mu belum diizinkan. Di Atlas: Database & Network Access > IP Access List > Allow Access from Anywhere.`);
+  if (/bad auth|authentication failed/i.test(msg)) return Object.assign(new Error("Username/password MongoDB di MONGO_URL salah. Cek lagi password user database di Atlas.", { cause: error }), { kind: "auth" });
+  if (/127\.0\.0\.1:27017|localhost:27017/.test(msg)) return new Error("MongoDB lokal tidak jalan. Install MongoDB atau pakai MONGO_URL dari Atlas.", { cause: error });
+  if (/querySrv/.test(msg)) return new Error(`${msg}\nDNS jaringan memblokir alamat Atlas. Coba ganti DNS Windows ke 1.1.1.1 / 8.8.8.8, atau pakai jaringan lain (hotspot HP).`, { cause: error });
+  if (/Server selection timed out|ReplicaSetNoPrimary|whitelist|IP/i.test(msg)) return new Error(`${msg}\nKemungkinan IP-mu belum diizinkan. Di Atlas: Database & Network Access > IP Access List > Allow Access from Anywhere.`, { cause: error });
   return error;
 }
 
