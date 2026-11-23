@@ -23,3 +23,8 @@ mobile/ios/Flutter/flutter_export_environment.sh
 *.iml
 .idea/
 ml-service/data/kaggle/
+# Catatan lokal (tidak di-commit)
+/CLAUDE.md
+/AGENTS.md
+/docs/
+.claude/
