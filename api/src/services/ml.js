@@ -7,7 +7,8 @@ const setFetch = (fn) => {
   fetchImpl = fn;
 };
 
-async function call(path, { method = "GET", body, timeout = 60000, raw = false } = {}) {
+// Batas 90 detik: ml-service di paket gratis perlu sekitar satu menit untuk bangun.
+async function call(path, { method = "GET", body, timeout = 90000, raw = false } = {}) {
   let res;
   try {
     res = await fetchImpl(`${config.mlUrl}${path}`, {
@@ -17,7 +18,7 @@ async function call(path, { method = "GET", body, timeout = 60000, raw = false }
       signal: AbortSignal.timeout(timeout),
     });
   } catch {
-    throw new HttpError(503, "Layanan analisis kimia sedang tidak aktif. Jalankan ml-service lalu coba lagi.");
+    throw new HttpError(503, "Layanan analisis kimia sedang tidak aktif. Coba lagi sebentar lagi.");
   }
   if (raw) return res;
   const data = await res.json().catch(() => ({}));
@@ -31,7 +32,7 @@ async function call(path, { method = "GET", body, timeout = 60000, raw = false }
 let metaCache = null;
 async function meta() {
   if (metaCache && metaCache.until > Date.now()) return metaCache.data;
-  const data = await call("/meta", { timeout: 15000 });
+  const data = await call("/meta");
   metaCache = { data, until: Date.now() + 10 * 60 * 1000 };
   return data;
 }

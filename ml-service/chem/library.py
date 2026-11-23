@@ -10,11 +10,13 @@ from rdkit import Chem, DataStructs
 from . import groups
 from .descriptors import mol_from_smiles
 from .features import bit_fp, vector
-from .predictor import MODELS
 from .properties import COMPUTED, TARGETS
 
 ROOT = Path(__file__).resolve().parents[1]
 log = logging.getLogger("chemistry")
+
+
+GROUP_IDS = list(groups.GROUPS)
 
 
 class Library:
@@ -24,42 +26,54 @@ class Library:
         self.by_smiles = {s: i for i, s in enumerate(self.df.smiles)}
         # Senyawa dari impor dataset lain bisa tanpa CID.
         self.by_cid = {int(c): i for i, c in enumerate(self.df.cid) if pd.notna(c)}
-        mols = [mol_from_smiles(s) for s in self.df.smiles]
-        self.inchikeys = {Chem.MolToInchiKey(m): i for i, m in enumerate(mols) if m is not None}
-        self.groups = [groups.find(m) for m in mols]
-        self.fps = [bit_fp(s) for s in self.df.smiles]
-        self._load_predictions()
+        self.columns = {k: self.df[t["column"]].tolist() for k, t in TARGETS.items()}
+        self.columns.update({k: self.df[k].tolist() for k in COMPUTED})
+        z = self._cache(csv)
+        self.pred = {k: (z[f"{k}_v"], z[f"{k}_sd"]) for k in predictor.models}
+        self.inchikeys = {k: i for i, k in enumerate(z["inchikeys"].tolist()) if k}
+        self.groups = [[g for n, g in enumerate(GROUP_IDS) if mask >> n & 1] for mask in z["groups"].tolist()]
+        self.fps = z["fps"]
+        self.fp_bits = np.bitwise_count(self.fps).sum(1, dtype=np.int32)
         log.info("Pustaka: %d senyawa", len(self.df))
 
-    def _load_predictions(self):
-        # Prediksi seluruh pustaka disimpan ke file, dihitung ulang bila model berubah.
-        sig = hashlib.md5(b"".join((MODELS / f"{k}.joblib").read_bytes()[:4096] for k in self.predictor.models)).hexdigest()[:10]
-        cache = ROOT / "data" / f"predictions_{sig}.npz"
+    def _cache(self, csv: Path):
+        """Hasil hitung pustaka disimpan ke file; dihitung ulang bila model atau datanya berubah."""
+        sig = hashlib.md5()
+        for part in (self.predictor.file.read_bytes(), csv.read_bytes(), repr(groups.GROUPS).encode()):
+            sig.update(part)
+        cache = ROOT / "data" / f"predictions_{sig.hexdigest()[:10]}.npz"
         if cache.exists():
-            z = np.load(cache)
-            self.pred = {k: (z[f"{k}_v"], z[f"{k}_sd"]) for k in self.predictor.models}
-            return
-        log.info("Menghitung prediksi untuk seluruh pustaka (sekali saja)...")
-        X = np.stack([vector(s) for s in self.df.smiles])
-        raw = self.predictor.predict(X)
-        self.pred = {k: (v[0], v[2]) for k, v in raw.items()}
+            with np.load(cache) as z:
+                return {k: z[k] for k in z.files}
+        log.info("Menyiapkan pustaka (sekali saja)...")
+        out = {
+            "inchikeys": np.array([_inchikey(s) for s in self.df.smiles]),
+            "groups": np.array([_group_mask(s) for s in self.df.smiles], dtype=np.int64),
+            "fps": np.stack([_packed_fp(bit_fp(s)) for s in self.df.smiles]),
+        }
+        raw = self.predictor.predict(np.stack([vector(s) for s in self.df.smiles]))
+        for k, (v, _, sd) in raw.items():
+            out[f"{k}_v"], out[f"{k}_sd"] = v, sd
         for old in (ROOT / "data").glob("predictions_*.npz"):
             old.unlink()
-        np.savez_compressed(cache, **{f"{k}_v": v for k, (v, _) in self.pred.items()}, **{f"{k}_sd": sd for k, (_, sd) in self.pred.items()})
+        np.savez_compressed(cache, **out)
+        return out
 
-    def properties(self, i: int):
-        """Semua sifat senyawa ke-i: eksperimen bila ada, kalau tidak hasil prediksi (dengan ±)."""
-        row = self.df.iloc[i]
+    def properties(self, i: int, keys=None):
+        """Sifat senyawa ke-i: eksperimen bila ada, kalau tidak hasil prediksi (dengan ±). keys=None: semua."""
         out = {}
-        for key, t in TARGETS.items():
-            exp = row.get(t["column"])
-            if pd.notna(exp):
+        for key in TARGETS:
+            if keys is not None and key not in keys:
+                continue
+            exp = self.columns[key][i]
+            if exp == exp:  # bukan NaN
                 out[key] = {"value": float(exp), "source": "eksperimen"}
             elif key in self.pred:
                 v, sd = self.pred[key]
                 out[key] = {"value": float(v[i]), "source": "prediksi", **spread(key, float(v[i]), float(sd[i]))}
         for key in COMPUTED:
-            out[key] = {"value": float(row[key]), "source": "struktur"}
+            if keys is None or key in keys:
+                out[key] = {"value": float(self.columns[key][i]), "source": "struktur"}
         return out
 
     def summary(self, i: int):
@@ -83,8 +97,10 @@ class Library:
         fp = bit_fp(smiles)
         if fp is None:
             return []
-        sims = np.array(DataStructs.BulkTanimotoSimilarity(fp, self.fps))
-        idx = np.argsort(-sims)[: k + 1]
+        q = _packed_fp(fp)
+        common = np.bitwise_count(self.fps & q).sum(1, dtype=np.int32)
+        sims = common / np.maximum(self.fp_bits + int(np.bitwise_count(q).sum()) - common, 1)
+        idx = np.argsort(-sims, kind="stable")[: k + 1]
         return [(int(i), float(sims[i])) for i in idx if sims[i] >= min_sim and sims[i] < 0.999][:k]
 
     def search(self, q: str, limit=20):
@@ -99,6 +115,23 @@ class Library:
         # nama yang diawali kata kunci didahulukan, lalu nama terpendek
         order = sorted(idx, key=lambda i: (not names[i].startswith(q), len(names[i])))
         return order[:limit]
+
+
+def _inchikey(smiles):
+    mol = mol_from_smiles(smiles)
+    return Chem.MolToInchiKey(mol) if mol is not None else ""
+
+
+def _group_mask(smiles):
+    mol = mol_from_smiles(smiles)
+    return sum(1 << GROUP_IDS.index(g) for g in groups.find(mol)) if mol is not None else 0
+
+
+def _packed_fp(fp):
+    bits = np.zeros(2048, dtype=np.uint8)
+    if fp is not None:
+        DataStructs.ConvertToNumpyArray(fp, bits)
+    return np.packbits(bits)
 
 
 def spread(key: str, value: float, sd: float):

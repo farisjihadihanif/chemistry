@@ -19,6 +19,7 @@ from sklearn.model_selection import KFold, cross_val_predict
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from chem.features import vector  # noqa: E402
 from chem.properties import TARGETS  # noqa: E402
+from pack import pack_all  # noqa: E402
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
@@ -45,4 +46,5 @@ if __name__ == "__main__":
         joblib.dump(model, out / f"{key}.joblib", compress=3)
         metrics[key] = {"n": int(mask.sum()), "mae": round(float(mae), 3), "r2": round(float(r2), 3), "log": bool(t.get("log"))}
         print(key, metrics[key], flush=True)
+    pack_all(out)
     (out / "metrics.json").write_text(json.dumps(metrics, indent=2))

@@ -1,10 +1,19 @@
 """Tes layanan ML. Jalankan: python -m pytest tests -q"""
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 
 from chem import parse
 from chem.analogs import generate
+from chem.packed import PackedForest, pack
 from chem.scoring import fit, score
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_parse_temperatures():
@@ -35,6 +44,34 @@ def test_analogs_are_valid_and_new():
     smiles = [s for s, _ in out]
     assert "CCCCCO" in smiles  # rantai diperpanjang
     assert "CCCCO" not in smiles
+
+
+def test_health_does_not_load_models():
+    code = (
+        "import sys, app; from fastapi.testclient import TestClient as C; "
+        "r = C(app.app).get('/health').json(); assert r == {'ok': True, 'loaded': False}, r; "
+        "assert 'sklearn' not in sys.modules"
+    )
+    subprocess.run([sys.executable, "-c", code], check=True, cwd=ROOT)
+
+
+def test_render_requires_token():
+    env = {**os.environ, "RENDER": "true", "ML_SERVICE_TOKEN": ""}
+    r = subprocess.run([sys.executable, "-c", "import app"], cwd=ROOT, env=env, capture_output=True, text=True)
+    assert r.returncode != 0 and "ML_SERVICE_TOKEN" in r.stderr
+
+
+def test_packed_forest_matches_sklearn():
+    from sklearn.ensemble import RandomForestRegressor
+
+    rng = np.random.default_rng(0)
+    X = rng.integers(0, 9, (400, 12)).astype(np.float32)
+    X[:, :4] += rng.random((400, 4), dtype=np.float32)
+    model = RandomForestRegressor(n_estimators=20, min_samples_leaf=2, random_state=1).fit(X, X @ rng.random(12))
+    mean, sd = PackedForest(**pack(model)).mean_sd(X)
+    per_tree = np.stack([t.predict(X) for t in model.estimators_])
+    np.testing.assert_allclose(mean, per_tree.mean(0), rtol=1e-6)
+    np.testing.assert_allclose(sd, per_tree.std(0), rtol=1e-4)
 
 
 @pytest.fixture(scope="module")

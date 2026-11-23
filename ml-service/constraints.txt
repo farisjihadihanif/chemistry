@@ -1,0 +1,12 @@
+# Versi yang sudah diuji (Python 3.13.5). Dipakai saat deploy: pip install -r requirements.txt -c constraints.txt
+fastapi==0.163.2
+starlette==1.10.0
+pydantic==2.14.3
+uvicorn==0.54.0
+httpx==0.28.1
+rdkit==2026.9.2
+scikit-learn==1.9.1
+scipy==1.18.1
+numpy==2.5.5
+pandas==3.1.1
+joblib==1.6.0

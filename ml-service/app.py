@@ -6,10 +6,12 @@ Jalankan: uvicorn app:app --port 5000
 import asyncio
 import logging
 import os
+import threading
 from typing import Optional
 
 import httpx
 from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 from rdkit import Chem
@@ -35,9 +37,23 @@ if os.path.exists(_env):
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger("chemistry")
 
-predictor = Predictor()
-library = Library(predictor)
 TOKEN = os.environ.get("ML_SERVICE_TOKEN", "")
+if not TOKEN and os.environ.get("RENDER"):
+    raise RuntimeError("ML_SERVICE_TOKEN wajib diisi: di Render layanan ini terbuka ke internet.")
+
+_library: Optional[Library] = None
+_lock = threading.Lock()
+
+
+def lib() -> Library:
+    """Pustaka dan model dimuat saat pertama dibutuhkan, bukan saat layanan menyala."""
+    global _library
+    if _library is None:
+        with _lock:
+            if _library is None:
+                _library = Library(Predictor())
+    return _library
+
 
 app = FastAPI(title="Chemistry ML service", docs_url=None, redoc_url=None)
 
@@ -52,24 +68,25 @@ async def check_token(request: Request, call_next):
 
 @app.get("/health")
 def health():
-    return {"ok": True, "compounds": len(library.df), "models": list(predictor.models)}
+    # Tidak boleh memanggil lib(): pemeriksa kesehatan harus cepat dan hemat memori.
+    return {"ok": True, "loaded": _library is not None}
 
 
 @app.get("/meta")
 def meta():
-    counts = {k: int(library.df[t["column"]].notna().sum()) for k, t in TARGETS.items()}
+    counts = {k: int(lib().df[t["column"]].notna().sum()) for k, t in TARGETS.items()}
     return {
-        "targets": {k: {"label": t["label"], "unit": t["unit"], "log": bool(t.get("log")), "experimental": counts[k], **predictor.metrics.get(k, {})} for k, t in TARGETS.items()},
+        "targets": {k: {"label": t["label"], "unit": t["unit"], "log": bool(t.get("log")), "experimental": counts[k], **lib().predictor.metrics.get(k, {})} for k, t in TARGETS.items()},
         "computed": COMPUTED,
         "groups": groups.labels(),
         "presets": PRESETS,
-        "compounds": len(library.df),
+        "compounds": len(lib().df),
     }
 
 
 def predict_one(smiles: str, desc: dict):
     X = vector(smiles, desc)[None, :]
-    raw = predictor.predict(X)
+    raw = lib().predictor.predict(X)
     props = {}
     for key, (v, _, sd) in raw.items():
         val = float(v[0])
@@ -84,9 +101,9 @@ def compound_from_smiles(smiles: str):
     desc = describe(smiles, strict=False)
     if desc is None:
         raise HTTPException(400, "SMILES tidak valid atau berisi unsur yang tidak didukung (hanya senyawa organik: C, H, N, O, S, P, F, Cl, Br, I, Si, B).")
-    i = library.find(desc["smiles"])
+    i = lib().find(desc["smiles"])
     if i is not None:
-        return {**library.summary(i), "properties": library.properties(i), "in_library": True}
+        return {**lib().summary(i), "properties": lib().properties(i), "in_library": True}
     mol = Chem.MolFromSmiles(desc["smiles"])
     return {
         "cid": None,
@@ -108,11 +125,12 @@ class AnalyzeReq(BaseModel):
 
 @app.post("/analyze")
 async def analyze(req: AnalyzeReq):
+    await run_in_threadpool(lib)  # jangan menahan /health selama pemuatan
     smiles = (req.smiles or "").strip()
     if not smiles and req.name:
-        hits = library.search(req.name, 1)
-        if hits and library.df["name"].iloc[hits[0]].lower() == req.name.strip().lower():
-            smiles = library.df.smiles.iloc[hits[0]]
+        hits = lib().search(req.name, 1)
+        if hits and lib().df["name"].iloc[hits[0]].lower() == req.name.strip().lower():
+            smiles = lib().df.smiles.iloc[hits[0]]
         else:
             found = await pubchem.by_name(req.name.strip())
             if not found or not found.get("smiles"):
@@ -121,24 +139,25 @@ async def analyze(req: AnalyzeReq):
     if not smiles:
         raise HTTPException(400, "Isi SMILES atau nama senyawa.")
     c = compound_from_smiles(smiles)
-    c["similar"] = [{**library.summary(i), "similarity": round(s, 3)} for i, s in library.similar(c["smiles"], 6)]
+    c["similar"] = [{**lib().summary(i), "similarity": round(s, 3)} for i, s in lib().similar(c["smiles"], 6)]
     return c
 
 
 @app.get("/compound/{cid}")
 def compound(cid: int):
-    i = library.by_cid.get(cid)
+    i = lib().by_cid.get(cid)
     if i is None:
         raise HTTPException(404, "Senyawa tidak ada di pustaka.")
-    c = {**library.summary(i), "properties": library.properties(i), "in_library": True}
-    c["similar"] = [{**library.summary(j), "similarity": round(s, 3)} for j, s in library.similar(c["smiles"], 6)]
+    c = {**lib().summary(i), "properties": lib().properties(i), "in_library": True}
+    c["similar"] = [{**lib().summary(j), "similarity": round(s, 3)} for j, s in lib().similar(c["smiles"], 6)]
     return c
 
 
 @app.get("/search")
 async def search(q: str = Query(..., min_length=1, max_length=100)):
-    idx = library.search(q, 20)
-    items = [{**library.summary(i), "in_library": True} for i in idx]
+    await run_in_threadpool(lib)  # jangan menahan /health selama pemuatan
+    idx = lib().search(q, 20)
+    items = [{**lib().summary(i), "in_library": True} for i in idx]
     if not items:
         found = await pubchem.by_name(q)
         if found and found.get("smiles") and describe(found["smiles"], strict=False):
@@ -183,28 +202,21 @@ def _passes(group_list, inc, exc):
     return set(inc) <= g and not (set(exc) & g)
 
 
-@app.post("/discover")
-async def discover(req: DiscoverReq):
-    crit = {k: v.model_dump() for k, v in req.criteria.items() if k in ALLOWED_KEYS and (v.min is not None or v.max is not None)}
-    if not crit:
-        raise HTTPException(400, "Isi minimal satu kriteria dengan batas bawah atau atas.")
-    for k, c in crit.items():
-        if c["min"] is not None and c["max"] is not None and c["min"] > c["max"]:
-            raise HTTPException(400, f"Batas bawah {TARGETS.get(k, COMPUTED.get(k))['label']} lebih besar dari batas atas.")
-
+def _find_candidates(req: DiscoverReq, crit: dict):
+    library, predictor = lib(), lib().predictor
     # 1) Senyawa yang sudah dikenal (pustaka PubChem)
     scored = []
     for i in range(len(library.df)):
         if not _passes(library.groups[i], req.include_groups, req.exclude_groups):
             continue
-        props = library.properties(i)
+        props = library.properties(i, crit)
         s, detail = score(props, crit)
         if s > 0:
             scored.append((s, i, props, detail))
     # skor sama: dahulukan yang lebih banyak didukung data eksperimen
     n_exp = lambda p: sum(1 for k in crit if p.get(k, {}).get("source") == "eksperimen")
     scored.sort(key=lambda x: (-x[0], -n_exp(x[2])))
-    known = [{**library.summary(i), "properties": p, "score": s, "fit": d, "origin": "pustaka", "in_library": True} for s, i, p, d in scored[: req.known_limit]]
+    known = [{**library.summary(i), "properties": library.properties(i), "score": s, "fit": d, "origin": "pustaka", "in_library": True} for s, i, _, d in scored[: req.known_limit]]
 
     # 2) Kandidat baru: turunan dari senyawa terbaik + usulan Gemini
     novel = []
@@ -256,13 +268,27 @@ async def discover(req: DiscoverReq):
                 novel.append(r)
                 if len(novel) >= req.novel_limit:
                     break
-            if req.check_pubchem and novel:
-                async with httpx.AsyncClient(timeout=8, headers=pubchem.HEADERS) as client:
-                    keys = [Chem.MolToInchiKey(Chem.MolFromSmiles(r["smiles"])) for r in novel]
-                    found = await asyncio.gather(*(pubchem.cid_for_inchikey(client, k) for k in keys))
-                for r, f in zip(novel, found):
-                    r["pubchem_cid"] = None if f in (None, "?") else f
-                    r["novelty"] = "belum_terdaftar" if f is None else ("tidak_dicek" if f == "?" else "terdaftar")
     # jumlah senyawa pustaka yang memenuhi SEMUA kriteria
     full = sum(1 for _, _, _, d in scored if all(v == 1 for v in d.values()))
+    return known, novel, full
+
+
+@app.post("/discover")
+async def discover(req: DiscoverReq):
+    crit = {k: v.model_dump() for k, v in req.criteria.items() if k in ALLOWED_KEYS and (v.min is not None or v.max is not None)}
+    if not crit:
+        raise HTTPException(400, "Isi minimal satu kriteria dengan batas bawah atau atas.")
+    for k, c in crit.items():
+        if c["min"] is not None and c["max"] is not None and c["min"] > c["max"]:
+            raise HTTPException(400, f"Batas bawah {TARGETS.get(k, COMPUTED.get(k))['label']} lebih besar dari batas atas.")
+
+    # Perhitungan berat di thread terpisah supaya /health tetap menjawab.
+    known, novel, full = await run_in_threadpool(_find_candidates, req, crit)
+    if req.check_pubchem and novel:
+        async with httpx.AsyncClient(timeout=8, headers=pubchem.HEADERS) as client:
+            keys = [Chem.MolToInchiKey(Chem.MolFromSmiles(r["smiles"])) for r in novel]
+            found = await asyncio.gather(*(pubchem.cid_for_inchikey(client, k) for k in keys))
+        for r, f in zip(novel, found):
+            r["pubchem_cid"] = None if f in (None, "?") else f
+            r["novelty"] = "belum_terdaftar" if f is None else ("tidak_dicek" if f == "?" else "terdaftar")
     return {"criteria": crit, "known": known, "novel": novel, "matched": full}

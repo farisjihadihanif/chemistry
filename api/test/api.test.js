@@ -147,7 +147,7 @@ test("ml-service mati -> 503 dengan pesan jelas", async () => {
     throw new Error("ECONNREFUSED");
   });
   const r = await h.request(app).get("/api/compounds/search?q=eth").expect(503);
-  assert.match(r.body.message, /ml-service/);
+  assert.match(r.body.message, /Layanan analisis kimia sedang tidak aktif/);
 });
 
 test("asisten kimia: data senyawa ikut dikirim, sesi tersimpan", async () => {

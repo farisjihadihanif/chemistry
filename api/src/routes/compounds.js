@@ -48,7 +48,7 @@ router.get("/structure.svg", async (req, res) => {
   const smiles = str(req.query.smiles, 400);
   if (!smiles) throw new HttpError(400, "SMILES kosong.");
   const q = new URLSearchParams({ smiles, w: String(Math.min(1200, parseInt(req.query.w, 10) || 320)), h: String(Math.min(900, parseInt(req.query.h, 10) || 240)), dark: req.query.dark === "1" ? "true" : "false" });
-  const r = await ml.call(`/structure.svg?${q}`, { raw: true, timeout: 15000 });
+  const r = await ml.call(`/structure.svg?${q}`, { raw: true });
   if (!r.ok) throw new HttpError(400, "SMILES tidak valid.");
   res.set("Content-Type", "image/svg+xml").set("Cache-Control", "public, max-age=604800").send(await r.text());
 });

@@ -1,0 +1,25 @@
+# Render Blueprint: ml-service (paket gratis). API dan web ada di Vercel (api/vercel.json, web/vercel.json).
+services:
+  - type: web
+    name: chemistry-ml
+    runtime: python
+    plan: free
+    region: singapore
+    rootDir: ml-service
+    # Melatih model dan menyiapkan cache pustaka saat build; keduanya tidak disimpan di git.
+    buildCommand: pip install --only-binary=:all: -r requirements.txt -c constraints.txt && python scripts/train.py && python scripts/warm.py
+    startCommand: python -m uvicorn app:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health # tidak memuat model
+    buildFilter:
+      paths:
+        - ml-service/**
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.5
+      - key: OPENBLAS_NUM_THREADS
+        value: "1"
+      - key: MALLOC_ARENA_MAX
+        value: "2"
+      # Dibuat Render. Salin nilainya ke ML_SERVICE_TOKEN di proyek API (Vercel).
+      - key: ML_SERVICE_TOKEN
+        generateValue: true
