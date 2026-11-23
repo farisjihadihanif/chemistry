@@ -51,25 +51,33 @@ Browser dan aplikasi mobile hanya berbicara dengan `api`. `ml-service` adalah la
   | Tegangan permukaan | 276 | 4,4 mN/m | 0,57 |
   | Suhu penyalaan sendiri | 705 | 68 °C | 0,40 |
 
-## Menjalankan di laptop (Windows)
+## Run locally
 
-Kebutuhan: Node.js 20+, Python 3.10–3.13, Flutter 3.47+ (untuk aplikasi mobile), dan akun MongoDB Atlas.
+Needs Node.js 20+, Python 3.12+ (tested on 3.13.5) and a MongoDB database.
 
-1. Jalankan `setup-windows.bat` (sekali saja). Skrip ini membuat virtualenv Python dan memasang semua paket.
-2. Isi `api\.env`: `MONGO_URL`, `JWT_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `GEMINI_API_KEY`, dan `SMTP_*` (boleh sama dengan HNI-Project).
-3. Jalankan `run-windows.bat`. Ini membuka tiga jendela: ml-service (port 5000), API (4100), dan web (5173).
-4. Buka http://localhost:5173.
+1. `setup-windows.bat` (once), then fill in `api/.env` (names in `api/.env.example`).
+2. `run-windows.bat` starts ml-service (5000), API (4100) and web (5173). Open http://localhost:5173.
 
-Menjalankan manual tanpa skrip:
+On other systems, run each part in its own terminal:
 
 ```bash
-cd ml-service && python -m venv .venv && .venv\Scripts\activate && pip install -r requirements.txt
-python -m uvicorn app:app --port 5000
+cd ml-service && python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt -c constraints.txt
+python -m uvicorn app:app --port 5000     # trains the models on the first request (2-3 minutes)
 cd api && npm install && npm run dev
 cd web && npm install && npm run dev
 ```
 
-### Aplikasi mobile
+## Deploy (free)
+
+1. **ml-service on Render:** New → Blueprint → this repo (`render.yaml`). Render generates `ML_SERVICE_TOKEN`. The service sleeps after 15 idle minutes; waking takes about a minute.
+2. **API on Vercel:** new project, root directory `api`. Set:
+   - Required: `MONGO_URL`, `JWT_SECRET` (16+ characters), `CLIENT_ORIGIN`, `APP_URL` (both the web URL), `ML_SERVICE_URL` (the Render URL), `ML_SERVICE_TOKEN` (same value as on Render), `ADMIN_EMAIL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`
+   - Optional: `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_FALLBACK_MODEL`, `AI_DAILY_LIMIT`, `JWT_DAYS`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `CONTACT_EMAIL`
+   - Leave `CROSS_SITE_COOKIE` unset. MongoDB Atlas must allow access from anywhere (`0.0.0.0/0`).
+3. **Web on Vercel:** put the API's URL in `web/vercel.json` if it is not `https://chemistry-api.vercel.app`, then create a project with root directory `web`. Leave `VITE_API_URL` unset: `/api` is proxied, so login cookies stay first-party.
+4. Check `/api/health` on the web URL. A 503 answer names the missing variable or the MongoDB error type.
+
+## Aplikasi mobile
 
 ```bash
 cd mobile
@@ -107,4 +115,14 @@ cd web && npm run lint && npm run build
 cd mobile && flutter analyze && flutter test
 ```
 
-Deploy: lihat [DEPLOY.md](DEPLOY.md).
+Deploy di VPS sendiri: lihat [DEPLOY.md](DEPLOY.md).
+
+## Copyright
+
+© 2026 Faris Jihadi Hanif Lubis. All rights reserved.
+
+This repository is public for portfolio and review purposes only. No license is granted: you may view the code, but you may not copy, modify, redistribute, or use it in other projects without my written permission.
+
+Repositori ini dipublikasikan hanya untuk keperluan portofolio. Kode boleh dilihat, tetapi tidak boleh disalin, diubah, disebarkan, atau digunakan tanpa izin tertulis dari saya.
+
+Contact: [LinkedIn](https://www.linkedin.com/in/faris-jihadi-hanif-lubis-62337a286/)
