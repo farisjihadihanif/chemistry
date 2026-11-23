@@ -51,15 +51,6 @@ Browser dan aplikasi mobile hanya berbicara dengan `api`. `ml-service` adalah la
   | Tegangan permukaan     | 276   | 4,4 mN/m   | 0,57 |
   | Suhu penyalaan sendiri | 705   | 68 °C      | 0,40 |
 
-```bash
-cd ml-service && python -m pytest tests -q   # parser, skor, kandidat, endpoint
-cd api && npm test                           # akun, ganti akun, foto, penemuan, laporan, Chesty, admin
-cd web && npm run lint && npm run build
-cd mobile && flutter analyze && flutter test
-```
-
-Deploy di VPS sendiri: lihat [DEPLOY.md](DEPLOY.md).
-
 ## Copyright
 
 © 2026 Faris Jihadi Hanif Lubis. All rights reserved.
