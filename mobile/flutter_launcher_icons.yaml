@@ -1,0 +1,21 @@
+# Ikon peluncur, digambar dari web/src/components/Logo.jsx.
+# Tidak dipasang di pubspec: versi barunya bentrok dengan dependensi aplikasi. Jalankan:
+#   dart pub global activate flutter_launcher_icons
+#   dart pub global run flutter_launcher_icons
+# Sesudahnya pulihkan dengan git: web/favicon.png (dirender terpisah, 48 px) dan
+# ios/Runner.xcodeproj/project.pbxproj (alat v0.14.4 merusak satu setelannya).
+flutter_launcher_icons:
+  image_path: assets/icon/icon.png
+  android: true
+  min_sdk_android: 24
+  adaptive_icon_background: "#F3F5F2"
+  adaptive_icon_foreground: assets/icon/foreground.png
+  adaptive_icon_foreground_inset: 0
+  ios: true
+  remove_alpha_ios: true
+  background_color_ios: "#F3F5F2"
+  web:
+    generate: true
+    image_path: assets/icon/icon.png
+    background_color: "#F3F5F2"
+    theme_color: "#1D4E89"
