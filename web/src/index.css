@@ -19,6 +19,13 @@
   --ind-mid: 47 122 77;
   --ind-high: 29 78 137;
   --danger: 178 34 34;
+  --card-shadow: 0 14px 30px -12px rgb(15 26 34 / 0.32);
+  --btn-shadow: 0 8px 18px -8px rgb(15 26 34 / 0.45);
+  /* gerak */
+  --hover-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --hover-move: 450ms;
+  --hover-color: 200ms;
+  --press: 100ms;
   color-scheme: light;
 }
 .dark {
@@ -36,6 +43,8 @@
   --ind-mid: 110 196 141;
   --ind-high: 120 168 230;
   --danger: 248 113 113;
+  --card-shadow: 0 16px 32px -10px rgb(0 0 0 / 0.75);
+  --btn-shadow: 0 8px 20px -6px rgb(0 0 0 / 0.8);
   color-scheme: dark;
 }
 
@@ -49,7 +58,7 @@
 @layer components {
   .container-page { @apply mx-auto w-full max-w-6xl px-4 sm:px-6; }
   .panel { @apply rounded-lg border border-line bg-surface; }
-  .btn { @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn { @apply relative inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50; }
   .btn-primary { @apply btn bg-cobalt text-cobalt-ink hover:bg-cobalt/90; }
   .btn-outline { @apply btn border border-line bg-surface text-ink hover:border-ink-mute; }
   .btn-ghost { @apply btn text-ink-soft hover:bg-sunk hover:text-ink; }
@@ -76,11 +85,69 @@
   to { opacity: 1; transform: none; }
 }
 .page-enter { animation: page-enter 0.28s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
-@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.rise { animation: rise 0.35s ease-out backwards; }
 @media (prefers-reduced-motion: reduce) {
-  .page-enter, .rise { animation: none; }
+  .page-enter { animation: none; }
 }
+
+/* ---- Gerak: hover & tekan ----
+   Memakai translate/scale (bukan transform) supaya tidak bentrok dengan transform milik
+   animasi muncul atau kartu bertumpuk. Bayangan memudar lewat opacity pseudo-elemen.
+   Tombol dipilih lewat [class*="btn"] karena .btn dipakai @apply. */
+@layer components {
+  .lift, .link-u, .nav-u { position: relative; }
+  .link-u { display: inline-block; max-width: 100%; }
+  .structure { overflow: hidden; }
+}
+.lift::before, [class*="btn"]::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  opacity: 0; box-shadow: var(--card-shadow);
+}
+[class*="btn"]::before { box-shadow: var(--btn-shadow); }
+.link-u::after, .nav-u::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1.5px;
+  background: currentColor; transform: scaleX(0); transform-origin: left; pointer-events: none;
+}
+.nav-u::after { left: 0.75rem; right: 0.75rem; bottom: 0.25rem; }
+@media (max-width: 767px) { .nav-u::after { display: none; } }
+.nav-u[aria-current="page"]::after, .link-u:focus-visible::after, .nav-u:focus-visible::after { transform: scaleX(1); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .lift { transition: translate var(--hover-move) var(--hover-ease), scale var(--press) ease-out; }
+  .step-card { transition: translate var(--hover-move) var(--hover-ease), filter 150ms; }
+  .lift::before, [class*="btn"]::before { transition: opacity var(--hover-move) var(--hover-ease); }
+  button:not(.lift) { transition: scale var(--press) ease-out; }
+  [class*="btn"]:not(.lift) {
+    transition: translate var(--hover-move) var(--hover-ease), scale var(--press) ease-out,
+      background-color var(--hover-color), border-color var(--hover-color), color var(--hover-color);
+  }
+  .structure img { transition: scale var(--hover-move) var(--hover-ease); }
+  .link-u::after, .nav-u::after { transition: transform var(--hover-move) var(--hover-ease); }
+  :is(button, [class*="btn"], .icon-nudge) > svg { transition: translate var(--hover-move) var(--hover-ease), scale var(--hover-move) var(--hover-ease); }
+  :is(button, [class*="btn"]):active:not(:disabled) { scale: 0.97; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .link-u:hover::after, .nav-u:hover::after { transform: scaleX(1); }
+  .lift:hover::before, [class*="btn"]:hover:not(:disabled)::before { opacity: 1; }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .lift:hover { translate: 0 -4px; }
+  [class*="btn"]:hover:not(:disabled) { translate: 0 -2px; }
+  .lift:hover > .structure img, .structure.zoom:hover img { scale: 1.05; }
+  :is(button, [class*="btn"], .icon-nudge):hover:not(:disabled) > svg { scale: 1.1; }
+  :is(button, [class*="btn"], .icon-nudge):hover:not(:disabled) > svg.lucide-arrow-right { scale: 1; translate: 4px 0; }
+}
+
+/* ---- Gerak: muncul saat digulir (lib/reveal.js) ---- */
+@media screen and (prefers-reduced-motion: no-preference) {
+  .reveal { transition: none !important; --reveal-x: 0px; --reveal-y: 20px; }
+  .reveal-left { --reveal-x: -28px; --reveal-y: 0px; }
+  .reveal-right { --reveal-x: 28px; --reveal-y: 0px; }
+  .reveal-wait { opacity: 0; }
+  .reveal-in { animation: reveal-fade 0.6s var(--hover-ease) var(--reveal-delay, 0ms) backwards; }
+  .reveal-soft { animation: reveal-slide 0.6s var(--hover-ease) var(--reveal-delay, 0ms) backwards; }
+}
+@keyframes reveal-fade { from { opacity: 0; transform: translate(var(--reveal-x), var(--reveal-y)); } }
+@keyframes reveal-slide { from { transform: translate(var(--reveal-x), var(--reveal-y)); } }
 
 /* Gambar struktur RDKit: garis mengikuti warna tinta */
 .structure svg { width: 100%; height: 100%; }

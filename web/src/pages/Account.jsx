@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { api, uploadAvatar } from "../lib/api";
 import { useAuth } from "../context/Auth";
+import CountUp from "../components/CountUp";
 import { Avatar, ErrorBox, Modal } from "../components/ui";
 import AvatarCropper from "../components/AvatarCropper";
 
@@ -68,10 +69,10 @@ export default function Account() {
     <div className="container-page max-w-2xl space-y-8 py-8">
       <h1 className="text-3xl font-semibold">Akun</h1>
       {summary && (
-        <dl className="grid grid-cols-3 gap-3">
+        <dl data-reveal="list" className="grid grid-cols-3 gap-3">
           {[["Pencarian", summary.discoveries], ["Favorit", summary.favorites], ["Sisa kuota Chesty hari ini", summary.quota.remaining ?? "tanpa batas"]].map(([l, v]) => (
-            <div key={l} className="panel p-3">
-              <dd className="num text-xl font-semibold">{v}</dd>
+            <div key={l} className="panel lift p-3">
+              <dd className="num text-xl font-semibold">{typeof v === "number" ? <CountUp value={v} /> : v}</dd>
               <dt className="text-xs text-ink-mute">{l}</dt>
             </div>
           ))}

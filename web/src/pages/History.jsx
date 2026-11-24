@@ -41,10 +41,10 @@ export default function History() {
             {!query && "Setiap pencarian tersimpan di sini lengkap dengan hasilnya."}
           </Empty>
         ) : (
-          <ul className="divide-y divide-line rounded-lg border border-line bg-surface">
+          <ul data-reveal="list" className="space-y-3">
             {data.items.map((d) => (
               <li key={d._id}>
-                <Link to={`/temukan/${d._id}`} className="grid gap-2 px-4 py-4 hover:bg-sunk/50 sm:grid-cols-[1fr_auto] sm:items-center">
+                <Link to={`/temukan/${d._id}`} className="panel lift grid gap-2 px-4 py-4 hover:border-ink-mute sm:grid-cols-[1fr_auto] sm:items-center">
                   <div className="min-w-0">
                     <p className="font-semibold">{d.judul}</p>
                     <p className="mt-0.5 truncate text-sm text-ink-mute">

@@ -98,7 +98,7 @@ export function Login() {
     }
   };
   return (
-    <Shell title={adding ? "Tambah akun" : "Masuk"} footer={<>Belum punya akun? <Link to={`/daftar?next=${encodeURIComponent(next)}`} className="font-semibold text-cobalt hover:underline">Daftar</Link></>}>
+    <Shell title={adding ? "Tambah akun" : "Masuk"} footer={<>Belum punya akun? <Link to={`/daftar?next=${encodeURIComponent(next)}`} className="link-u font-semibold text-cobalt">Daftar</Link></>}>
       <SavedAccounts onPick={pick} />
       <form onSubmit={submit} className="space-y-4">
         <div>
@@ -106,7 +106,7 @@ export function Login() {
           <input id="identifier" className="field" autoComplete="username" required value={form.identifier} onChange={(e) => setForm((f) => ({ ...f, identifier: e.target.value }))} />
         </div>
         <PasswordField id="password" autoComplete="current-password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
-        <div className="-mt-1 text-right"><Link to="/lupa-password" className="text-sm text-cobalt hover:underline">Lupa password?</Link></div>
+        <div className="-mt-1 text-right"><Link to="/lupa-password" className="link-u text-sm text-cobalt">Lupa password?</Link></div>
         <ErrorBox>{error}</ErrorBox>
         <button className="btn-primary w-full" disabled={busy}>{busy ? "Masuk…" : "Masuk"}</button>
       </form>
@@ -137,7 +137,7 @@ export function Register() {
     }
   };
   return (
-    <Shell title="Buat akun" footer={<>Sudah punya akun? <Link to="/masuk" className="font-semibold text-cobalt hover:underline">Masuk</Link></>}>
+    <Shell title="Buat akun" footer={<>Sudah punya akun? <Link to="/masuk" className="link-u font-semibold text-cobalt">Masuk</Link></>}>
       <form onSubmit={submit} className="space-y-4">
         <div><label className="label" htmlFor="nama">Nama lengkap</label><input id="nama" className="field" required autoComplete="name" value={form.namaLengkap} onChange={set("namaLengkap")} /></div>
         <div><label className="label" htmlFor="inst">Institusi / perusahaan <span className="font-normal text-ink-mute">(opsional)</span></label><input id="inst" className="field" autoComplete="organization" value={form.institusi} onChange={set("institusi")} /></div>
@@ -158,7 +158,7 @@ export function ForgotPassword() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   return (
-    <Shell title="Lupa password" footer={<Link to="/masuk" className="font-semibold text-cobalt hover:underline">Kembali ke halaman masuk</Link>}>
+    <Shell title="Lupa password" footer={<Link to="/masuk" className="link-u font-semibold text-cobalt">Kembali ke halaman masuk</Link>}>
       {done ? (
         <p className="text-ink-soft">{done}</p>
       ) : (
@@ -196,7 +196,7 @@ export function ResetPassword() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   return (
-    <Shell title="Buat password baru" footer={<Link to="/lupa-password" className="font-semibold text-cobalt hover:underline">Minta link baru</Link>}>
+    <Shell title="Buat password baru" footer={<Link to="/lupa-password" className="link-u font-semibold text-cobalt">Minta link baru</Link>}>
       {!token ? (
         <p className="text-ink-soft">Link tidak lengkap. Buka lagi link dari email, atau minta link baru.</p>
       ) : (

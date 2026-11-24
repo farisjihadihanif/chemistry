@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 import { api } from "../lib/api";
 import { useAuth } from "../context/Auth";
 import { displayName, formatDate, timeAgo } from "../lib/format";
+import CountUp from "../components/CountUp";
 import { Avatar, ConfirmModal, Empty, ErrorBox, Pagination, Spinner } from "../components/ui";
 
 function Stats() {
@@ -15,7 +16,7 @@ function Stats() {
   const max = Math.max(1, ...s.perDay.map((d) => d.n));
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <dl data-reveal="list" className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {[
           ["Pengguna", s.users],
           ["Akun aktif", s.aktif],
@@ -24,8 +25,8 @@ function Stats() {
           ["Pencarian 7 hari", s.discoveriesWeek],
           ["Permintaan Chesty & kalimat hari ini", s.aiToday],
         ].map(([l, v]) => (
-          <div key={l} className="panel p-3">
-            <dd className="num text-2xl font-semibold">{v.toLocaleString("id-ID")}</dd>
+          <div key={l} className="panel lift p-3">
+            <dd className="num text-2xl font-semibold"><CountUp value={v} /></dd>
             <dt className="text-xs text-ink-mute">{l}</dt>
           </div>
         ))}

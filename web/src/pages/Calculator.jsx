@@ -65,7 +65,7 @@ export default function Calculator() {
         {EXAMPLES.map(([label, value]) => (
           <button
             key={label}
-            className="text-cobalt hover:underline"
+            className="link-u text-cobalt"
             onClick={() => {
               setInput(value);
               run(value);

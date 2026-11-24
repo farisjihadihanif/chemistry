@@ -1,10 +1,11 @@
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Columns3, Heart, History, LogOut, Menu, Moon, Settings, Shield, Sun, UserPlus, X } from "lucide-react";
 import { useAuth } from "../context/Auth";
 import { useTheme } from "../context/Theme";
 import { useCollect } from "../context/Collect";
 import { displayName } from "../lib/format";
+import { startReveal } from "../lib/reveal";
 import { Avatar, PageLoader } from "./ui";
 import { Logo } from "./Logo";
 import FloatingChesty from "./FloatingChesty";
@@ -44,7 +45,7 @@ function UserMenu() {
     return () => document.removeEventListener("mousedown", close);
   }, []);
   const others = accounts.filter((a) => String(a._id) !== String(user._id));
-  const item = "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm hover:bg-sunk";
+  const item = "icon-nudge flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm hover:bg-sunk";
   return (
     <div ref={ref} className="relative">
       <button onClick={() => setOpen((v) => !v)} className="block shrink-0 rounded-full hover:ring-2 hover:ring-line" aria-expanded={open} aria-haspopup="menu" aria-label="Menu akun">
@@ -112,7 +113,7 @@ function Navbar() {
     setOpen(false);
   }, [pathname]);
   const nav = user ? NAV_USER : NAV_GUEST;
-  const link = ({ isActive }) => `rounded-md px-3 py-2 text-sm font-medium ${isActive ? "text-cobalt" : "text-ink-soft hover:text-ink"}`;
+  const link = ({ isActive }) => `nav-u rounded-md px-3 py-2 text-sm font-medium ${isActive ? "text-cobalt" : "text-ink-soft hover:text-ink"}`;
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur">
       <div className="container-page flex h-14 items-center gap-4">
@@ -192,9 +193,9 @@ function Footer() {
         <span>Created by Faris Jihadi Hanif Lubis</span>
         <span className="md:text-center">Chemistry © 2026</span>
         <nav className="flex justify-center gap-4 md:justify-end" aria-label="Informasi">
-          <Link to="/tentang" className="hover:text-ink">Tentang data</Link>
-          <Link to="/ketentuan" className="hover:text-ink">Ketentuan</Link>
-          <Link to="/privasi" className="hover:text-ink">Privasi</Link>
+          <Link to="/tentang" className="link-u hover:text-ink">Tentang data</Link>
+          <Link to="/ketentuan" className="link-u hover:text-ink">Ketentuan</Link>
+          <Link to="/privasi" className="link-u hover:text-ink">Privasi</Link>
         </nav>
       </div>
     </footer>
@@ -204,14 +205,21 @@ function Footer() {
 export default function Layout() {
   const { pathname } = useLocation();
   const { user } = useAuth();
-  useEffect(() => {
+  const rootRef = useRef(null);
+  const firstPath = useRef(pathname);
+  const moved = useRef(false);
+  // Transisi halaman hanya saat berpindah, bukan pada tampilan pertama.
+  if (pathname !== firstPath.current) moved.current = true;
+  // Sebelum rute baru digambar, supaya posisi elemen dihitung dari puncak halaman.
+  useLayoutEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
+  useLayoutEffect(() => startReveal(rootRef.current), []);
   return (
-    <div className="flex min-h-screen flex-col">
+    <div ref={rootRef} className="flex min-h-screen flex-col">
       <Navbar />
       <main className="flex-1">
-        <div key={`${user?._id || "tamu"}:${pathname}`} className="page-enter">
+        <div key={`${user?._id || "tamu"}:${pathname}`} className={moved.current ? "page-enter" : undefined}>
           <Suspense fallback={<PageLoader />}>
             <Outlet />
           </Suspense>

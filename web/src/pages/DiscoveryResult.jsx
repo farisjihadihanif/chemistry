@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { api, exportUrl } from "../lib/api";
 import { propInfo, useMeta } from "../context/Meta";
 import { formatDate, rangeText } from "../lib/format";
+import CountUp from "../components/CountUp";
 import { Legend, ResultRow } from "../components/Results";
 import { ConfirmModal, Empty, PageLoader } from "../components/ui";
 
@@ -28,7 +29,7 @@ export default function DiscoveryResult() {
 
   return (
     <div className="container-page py-8">
-      <Link to="/riwayat" className="text-sm text-cobalt hover:underline">Riwayat pencarian</Link>
+      <Link to="/riwayat" className="link-u text-sm text-cobalt">Riwayat pencarian</Link>
       <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 max-w-3xl">
           <h1 className="text-3xl font-semibold leading-tight">{d.judul}</h1>
@@ -62,7 +63,7 @@ export default function DiscoveryResult() {
           )}
         </div>
         <div className="panel p-4">
-          <p className="num text-3xl font-semibold text-cobalt">{d.matched.toLocaleString("id-ID")}</p>
+          <p className="num text-3xl font-semibold text-cobalt"><CountUp value={d.matched} /></p>
           <p className="text-sm text-ink-soft">senyawa di pustaka memenuhi semua kriteria.</p>
         </div>
       </section>
@@ -74,8 +75,8 @@ export default function DiscoveryResult() {
       <section className="mt-6">
         <h2 className="text-xl font-semibold">Senyawa yang sudah dikenal</h2>
         <p className="mt-1 text-sm text-ink-mute">Diurutkan menurut skor kecocokan.</p>
-        <div className="mt-4 space-y-3">
-          {d.known.length ? d.known.map((c, i) => <ResultRow key={c.smiles} c={c} meta={meta} criteria={d.criteria} discoveryId={d._id} rank={i} />) : <Empty title="Tidak ada senyawa yang cocok">Coba longgarkan rentang atau kurangi gugus yang dihindari.</Empty>}
+        <div data-reveal="list" className="mt-4 space-y-3">
+          {d.known.length ? d.known.map((c) => <ResultRow key={c.smiles} c={c} meta={meta} criteria={d.criteria} discoveryId={d._id} />) : <Empty title="Tidak ada senyawa yang cocok">Coba longgarkan rentang atau kurangi gugus yang dihindari.</Empty>}
         </div>
       </section>
 
@@ -85,8 +86,8 @@ export default function DiscoveryResult() {
           <p className="mt-1 max-w-3xl text-sm text-ink-mute">
             Struktur hasil modifikasi senyawa terbaik{d.novel.some((c) => c.origin === "gemini") ? " dan rancangan otomatis" : ""}. Semua sifatnya nilai perkiraan, jadi perlu dikonfirmasi lewat sintesis dan uji laboratorium.
           </p>
-          <div className="mt-4 space-y-3">
-            {d.novel.map((c, i) => <ResultRow key={c.smiles} c={c} meta={meta} criteria={d.criteria} discoveryId={d._id} rank={i} />)}
+          <div data-reveal="list" className="mt-4 space-y-3">
+            {d.novel.map((c) => <ResultRow key={c.smiles} c={c} meta={meta} criteria={d.criteria} discoveryId={d._id} />)}
           </div>
         </section>
       )}

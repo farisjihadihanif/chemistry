@@ -32,10 +32,10 @@ export default function Compare() {
               <th className="w-44" />
               {compare.map((c) => (
                 <th key={c.smiles} scope="col" className="px-3 pb-4 text-left align-top font-normal">
-                  <div className="structure panel aspect-[4/3] p-1"><Structure smiles={c.smiles} w={320} h={240} /></div>
+                  <div className="structure zoom panel aspect-[4/3] p-1"><Structure smiles={c.smiles} w={320} h={240} /></div>
                   <div className="mt-2 flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <Link to={detailLink(c)} className="font-semibold hover:underline">{compoundTitle(c)}</Link>
+                      <Link to={detailLink(c)} className="link-u font-semibold">{compoundTitle(c)}</Link>
                       <p className="text-ink-soft"><Formula value={c.formula} /></p>
                     </div>
                     <button className="rounded p-1 text-ink-mute hover:bg-sunk" onClick={() => toggleCompare(c)} aria-label={`Keluarkan ${compoundTitle(c)}`}>

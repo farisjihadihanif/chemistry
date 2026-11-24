@@ -60,7 +60,7 @@ export default function CompoundView({ c }) {
     <div>
       <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
         <div>
-          <div className="structure panel aspect-[4/3] p-3">
+          <div data-reveal="left" className="structure zoom panel aspect-[4/3] p-3">
             <Structure smiles={c.smiles} w={640} h={480} />
           </div>
           <div className="mt-3 flex items-start gap-2">
@@ -142,10 +142,10 @@ export default function CompoundView({ c }) {
         <section className="mt-12">
           <h2 className="text-xl font-semibold">Senyawa mirip di pustaka</h2>
           <p className="mt-1 text-sm text-ink-mute">Diurutkan menurut kemiripan struktur.</p>
-          <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <ul data-reveal="list" className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {c.similar.map((s) => (
               <li key={s.cid}>
-                <Link to={detailLink(s)} className="panel block p-2 hover:border-ink-mute">
+                <Link to={detailLink(s)} className="panel lift block h-full p-2 hover:border-ink-mute">
                   <div className="structure aspect-[4/3]"><Structure smiles={s.smiles} w={240} h={180} /></div>
                   <p className="mt-1 truncate text-sm font-medium">{s.name || s.formula}</p>
                   <p className="num text-xs text-ink-mute">{Math.round(s.similarity * 100)}% mirip</p>

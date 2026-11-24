@@ -49,10 +49,10 @@ export default function Library() {
         ) : items === null ? null : items.length === 0 ? (
           <Empty title={`"${q}" tidak ditemukan`}>Coba nama dalam bahasa Inggris (mis. "acetic acid"), atau cari lewat Kalkulator dengan SMILES.</Empty>
         ) : (
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <ul data-reveal="list" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((c) => (
               <li key={c.cid || c.smiles}>
-                <Link to={detailLink(c)} className="panel flex gap-3 p-3 hover:border-ink-mute">
+                <Link to={detailLink(c)} className="panel lift flex h-full gap-3 p-3 hover:border-ink-mute">
                   <div className="structure aspect-[4/3] w-28 shrink-0 rounded bg-sunk/60"><Structure smiles={c.smiles} w={224} h={168} /></div>
                   <div className="min-w-0">
                     <p className="truncate font-semibold">{c.name}</p>

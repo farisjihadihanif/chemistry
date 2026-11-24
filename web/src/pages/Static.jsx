@@ -102,11 +102,11 @@ export function Privacy() {
         </ul>
         <p>Kami tidak menjual data, tidak memasang iklan, dan tidak memakai pelacak analitik. Cookie hanya dipakai untuk menjaga kamu tetap masuk dan mengingat akun yang pernah masuk di perangkat ini; pilihan tema disimpan di browser.</p>
         <h2>Menghapus data</h2>
-        <p>Di halaman <Link to="/akun">Akun</Link>, pilih Hapus akun. Semua riwayat, favorit, dan percakapan ikut terhapus permanen.</p>
+        <p>Di halaman <Link to="/akun" className="link-u">Akun</Link>, pilih Hapus akun. Semua riwayat, favorit, dan percakapan ikut terhapus permanen.</p>
         {email && (
           <>
             <h2>Kontak</h2>
-            <p><a href={`mailto:${email}`}>{email}</a></p>
+            <p><a className="link-u" href={`mailto:${email}`}>{email}</a></p>
           </>
         )}
       </div>

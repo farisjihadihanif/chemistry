@@ -26,12 +26,12 @@ function FavoriteCard({ f, meta, onChange, onDelete }) {
   };
   const shown = ["boiling_point", "melting_point", "flash_point", "viscosity", "density"].filter((k) => c.properties?.[k]);
   return (
-    <li className="panel grid gap-4 p-4 sm:grid-cols-[120px_1fr]">
+    <li className="panel lift grid gap-4 p-4 sm:grid-cols-[120px_1fr]">
       <Link to={detailLink(c)} className="structure block aspect-[4/3] rounded bg-sunk/60"><Structure smiles={c.smiles} w={240} h={180} /></Link>
       <div className="min-w-0">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <Link to={detailLink(c)} className="font-semibold hover:underline">{compoundTitle(c)}</Link>
+            <Link to={detailLink(c)} className="link-u font-semibold">{compoundTitle(c)}</Link>
             <p className="text-sm text-ink-soft"><Formula value={c.formula} /> <span className="text-xs text-ink-mute">· disimpan {timeAgo(f.createdAt)}</span></p>
           </div>
           <button className="rounded p-1.5 text-ink-mute hover:bg-sunk hover:text-danger" onClick={() => onDelete(f)} aria-label={`Hapus ${compoundTitle(c)} dari favorit`}><Trash2 size={15} /></button>
@@ -83,7 +83,7 @@ export default function Favorites() {
         ) : data.items.length === 0 ? (
           <Empty title={query ? "Tidak ada yang cocok" : "Belum ada favorit"}>{!query && "Simpan senyawa dari hasil pencarian atau halaman senyawa untuk dibandingkan dan diberi catatan."}</Empty>
         ) : (
-          <ul className="space-y-3">
+          <ul data-reveal="list" className="space-y-3">
             {data.items.map((f) => (
               <FavoriteCard key={f._id} f={f} meta={meta} onChange={(nf) => setData((d) => ({ ...d, items: d.items.map((x) => (x._id === nf._id ? nf : x)) }))} onDelete={setDel} />
             ))}

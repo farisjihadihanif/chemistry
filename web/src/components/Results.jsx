@@ -16,13 +16,13 @@ export function detailLink(c) {
   return c.cid ? `/senyawa/${c.cid}` : `/kalkulator?smiles=${encodeURIComponent(c.smiles)}`;
 }
 
-export function ResultRow({ c, meta, criteria, discoveryId, rank }) {
+export function ResultRow({ c, meta, criteria, discoveryId }) {
   const { user } = useAuth();
   const { favKeys, toggleFav, toggleCompare, inCompare } = useCollect();
   const fav = favKeys.has(keyOf(c));
   const novel = !c.in_library && c.origin !== "pustaka";
   return (
-    <article className="panel rise grid grid-cols-[88px_minmax(0,1fr)] gap-4 p-4 sm:grid-cols-[132px_minmax(0,1fr)] lg:grid-cols-[132px_minmax(0,1fr)_260px]" style={{ animationDelay: `${Math.min(rank, 10) * 40}ms` }}>
+    <article className="panel lift grid grid-cols-[88px_minmax(0,1fr)] gap-4 p-4 sm:grid-cols-[132px_minmax(0,1fr)] lg:grid-cols-[132px_minmax(0,1fr)_260px]">
       <Link to={detailLink(c)} className="structure block aspect-[4/3] w-full self-start rounded-md bg-sunk/60 p-1" aria-label={`Lihat detail ${compoundTitle(c)}`}>
         <Structure smiles={c.smiles} w={264} h={198} />
       </Link>
@@ -32,7 +32,7 @@ export function ResultRow({ c, meta, criteria, discoveryId, rank }) {
           <ScoreBadge score={c.score} />
           <div className="min-w-0">
             <h3 className="font-semibold leading-snug">
-              <Link to={detailLink(c)} className="hover:underline">
+              <Link to={detailLink(c)} className="link-u">
                 {compoundTitle(c)}
               </Link>
             </h3>

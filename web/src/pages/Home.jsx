@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ArrowDown, Search, Sparkles } from "lucide-react";
+import { ArrowDown, ArrowRight, Search, Sparkles } from "lucide-react";
 import { useAuth } from "../context/Auth";
 import { propInfo, useMeta } from "../context/Meta";
 import { Formula, PropValue, RangeBar, ScoreBadge, Structure } from "../components/chem";
+import CountUp from "../components/CountUp";
 import AtomOrbits from "../components/AtomOrbits";
 import ParticleField from "../components/ParticleField";
 
@@ -33,12 +34,12 @@ function Hero({ start }) {
         </h1>
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-ink-soft">Chemistry menyaring senyawa dengan data eksperimen, lalu merancang kandidat struktur baru dan memperkirakan sifatnya.</p>
         <div className="mt-9 flex flex-wrap justify-center gap-3">
-          <Link to={start} className="btn-primary px-6 py-3 text-base">Mulai mencari</Link>
+          <Link to={start} className="btn-primary px-6 py-3 text-base">Mulai mencari <ArrowRight size={18} /></Link>
           <Link to="/pustaka" className="btn-outline bg-surface/90 px-6 py-3 text-base backdrop-blur">Lihat pustaka senyawa</Link>
         </div>
       </div>
       <a href="#cara-kerja" className="absolute bottom-6 left-1/2 -translate-x-1/2 rounded-full p-2 text-ink-mute hover:text-ink" aria-label="Lihat cara kerjanya">
-        <ArrowDown size={20} className="animate-bounce" />
+        <ArrowDown size={20} className="animate-bounce motion-reduce:animate-none" />
       </a>
     </section>
   );
@@ -86,9 +87,9 @@ function FilterVisual({ total }) {
   return (
     <div>
       <div className="grid grid-cols-3 gap-2 text-center">
-        {[[total, "senyawa di pustaka"], ["37", "memenuhi kriteria"], ["8", "kandidat baru"]].map(([n, l], i) => (
+        {[[total, "senyawa di pustaka"], [37, "memenuhi kriteria"], [8, "kandidat baru"]].map(([n, l], i) => (
           <div key={l} className={`rounded-lg border p-3 ${i === 2 ? "border-cobalt/40 bg-cobalt-soft/60" : "border-line bg-paper"}`}>
-            <p className="num text-xl font-semibold sm:text-2xl">{n}</p>
+            <p className="num text-xl font-semibold sm:text-2xl"><CountUp value={n} /></p>
             <p className="mt-0.5 text-xs text-ink-mute">{l}</p>
           </div>
         ))}
@@ -96,7 +97,7 @@ function FilterVisual({ total }) {
       <p className="mt-2 text-xs text-ink-mute">Contoh untuk kebutuhan &ldquo;pelarut serbaguna&rdquo;.</p>
       <div className="mt-3 grid grid-cols-3 gap-2">
         {candidates.map(([name, smi, note]) => (
-          <figure key={smi} className="rounded-lg border border-line bg-paper p-2">
+          <figure key={smi} className="lift rounded-lg border border-line bg-paper p-2">
             <div className="structure aspect-[4/3] rounded bg-sunk/50"><Structure smiles={smi} w={240} h={180} alt={`Struktur ${name}`} /></div>
             <figcaption className="mt-1.5 text-xs">
               <span className="block truncate font-medium">{name}</span>
@@ -113,7 +114,7 @@ function EvidenceVisual({ meta }) {
   return (
     <div className="rounded-lg border border-line bg-paper p-4">
       <div className="flex items-start gap-4">
-        <div className="structure aspect-[4/3] w-28 shrink-0 rounded bg-sunk/60"><Structure smiles={EXAMPLE.smiles} w={224} h={168} alt="Struktur etil laktat" /></div>
+        <div className="structure zoom aspect-[4/3] w-28 shrink-0 rounded bg-sunk/60"><Structure smiles={EXAMPLE.smiles} w={224} h={168} alt="Struktur etil laktat" /></div>
         <div className="min-w-0 pt-1">
           <div className="flex items-center gap-2">
             <ScoreBadge score={EXAMPLE.score} />
@@ -179,14 +180,14 @@ function StackedSteps({ steps }) {
         <li key={s.title} className="pb-6 lg:sticky lg:pb-8" style={{ top: `calc(5.5rem + ${i * 1.25}rem)` }}>
           <article
             ref={(el) => (refs.current[i] = el)}
-            className="grid origin-top gap-8 rounded-2xl border border-line bg-surface p-6 shadow-lift transition-[filter] sm:p-10 lg:min-h-[30rem] lg:grid-cols-[0.9fr_1.1fr] lg:items-center"
+            className="step-card lift grid origin-top gap-8 rounded-2xl border border-line bg-surface p-6 shadow-lift sm:p-10 lg:min-h-[30rem] lg:grid-cols-[0.9fr_1.1fr] lg:items-center"
           >
             <div>
               <span className="num grid h-12 w-12 place-items-center rounded-full border-2 border-cobalt text-lg font-semibold text-cobalt">{i + 1}</span>
-              <h3 className="mt-5 text-2xl font-semibold sm:text-3xl">{s.title}</h3>
+              <h3 data-reveal="up" className="mt-5 text-2xl font-semibold sm:text-3xl">{s.title}</h3>
               <p className="mt-3 max-w-md leading-relaxed text-ink-soft sm:text-lg">{s.body}</p>
             </div>
-            <div>{s.visual}</div>
+            <div data-reveal="right">{s.visual}</div>
           </article>
         </li>
       ))}
@@ -198,7 +199,7 @@ export default function Home() {
   const { user } = useAuth();
   const { meta } = useMeta();
   const start = user ? "/temukan" : "/daftar?next=/temukan";
-  const total = meta ? meta.compounds.toLocaleString("id-ID") : "12.776";
+  const total = meta ? meta.compounds : 12776;
   const steps = [
     {
       title: "Tulis kriteria",
@@ -239,9 +240,9 @@ export default function Home() {
             <div>
               <h2 className="text-2xl font-semibold">Seberapa banyak datanya</h2>
               <p className="mt-3 leading-relaxed text-ink-soft">
-                Pustaka berisi <span className="num">{total}</span> senyawa organik dengan sifat fisik hasil pengukuran. Perkiraan untuk struktur baru diuji terhadap senyawa yang tidak dipakai saat belajar, jadi ketepatannya bisa dilihat di tabel ini.
+                Pustaka berisi <span className="num">{total.toLocaleString("id-ID")}</span> senyawa organik dengan sifat fisik hasil pengukuran. Perkiraan untuk struktur baru diuji terhadap senyawa yang tidak dipakai saat belajar, jadi ketepatannya bisa dilihat di tabel ini.
               </p>
-              <Link to="/tentang" className="mt-4 inline-block text-sm font-semibold text-cobalt hover:underline">Cara Chemistry menghitung</Link>
+              <Link to="/tentang" className="link-u icon-nudge mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-cobalt">Cara Chemistry menghitung <ArrowRight size={15} /></Link>
             </div>
             <table className="w-full text-sm">
               <thead className="text-left text-xs text-ink-mute">
@@ -251,12 +252,12 @@ export default function Home() {
                   <th className="py-2 text-right font-medium">Ketepatan perkiraan</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody data-reveal="list">
                 {Object.entries(meta.targets).map(([k, t]) => (
                   <tr key={k} className="border-b border-line">
                     <td className="py-2">{t.label}</td>
-                    <td className="num py-2 text-right">{t.experimental.toLocaleString("id-ID")}</td>
-                    <td className="num py-2 text-right">{t.r2 != null ? `${Math.round(t.r2 * 100)}%` : "–"}</td>
+                    <td className="num py-2 text-right"><CountUp value={t.experimental} /></td>
+                    <td className="num py-2 text-right">{t.r2 != null ? <CountUp value={Math.round(t.r2 * 100)} format={(n) => `${n}%`} /> : "–"}</td>
                   </tr>
                 ))}
               </tbody>

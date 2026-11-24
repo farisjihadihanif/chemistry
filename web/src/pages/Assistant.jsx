@@ -101,9 +101,9 @@ export default function Assistant() {
               <ChestyArt className="mx-auto h-auto w-24" />
               <h1 className="mt-3 text-2xl font-semibold">Halo, aku Chesty.</h1>
               <p className="mt-2 text-sm text-ink-soft">Tanya soal sifat, struktur, keselamatan, atau cara menguji senyawa. Kalau datang dari halaman senyawa, data senyawanya ikut kubaca.</p>
-              <div className="mt-5 flex flex-col gap-2">
+              <div data-reveal="list" className="mt-5 flex flex-col gap-2">
                 {STARTERS.map((s) => (
-                  <button key={s} onClick={() => send(s)} className="rounded-md border border-line px-3 py-2 text-left text-sm text-ink-soft hover:border-cobalt hover:text-ink">
+                  <button key={s} onClick={() => send(s)} className="lift rounded-md border border-line px-3 py-2 text-left text-sm text-ink-soft hover:border-cobalt hover:text-ink">
                     {s}
                   </button>
                 ))}
