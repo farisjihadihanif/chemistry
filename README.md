@@ -28,7 +28,6 @@ ml-service/
 api/
 web/
 mobile/
-
 ```
 
 Browser dan aplikasi mobile hanya berbicara dengan `api`. `ml-service` adalah layanan internal yang tidak dibuka ke publik.
