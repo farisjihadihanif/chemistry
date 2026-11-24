@@ -24,11 +24,11 @@ Dibuat oleh Faris Jihadi Hanif Lubis.
 ## Struktur
 
 ```
-ml-service/  Python + FastAPI: RDKit, model Random Forest, pustaka PubChem, pembuat kandidat
-api/         Node.js + Express + MongoDB: akun, penemuan, riwayat, favorit, Chesty (Gemini), admin
-web/         React + Vite + Tailwind
-mobile/      Flutter (Android & iOS)
-deploy/      Konfigurasi PM2, Nginx, dan skrip backup
+ml-service/
+api/
+web/
+mobile/
+
 ```
 
 Browser dan aplikasi mobile hanya berbicara dengan `api`. `ml-service` adalah layanan internal yang tidak dibuka ke publik.
@@ -53,7 +53,9 @@ Browser dan aplikasi mobile hanya berbicara dengan `api`. `ml-service` adalah la
 
 ## Website
 
-Deploy Website on: https://chamistry.vercel.app/
+Visit Deployment Website on: https://chamistry.vercel.app
+
+The mobile APP v.01 version availiable on release
 
 ## Copyright
 
