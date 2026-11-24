@@ -54,7 +54,7 @@ Browser dan aplikasi mobile hanya berbicara dengan `api`. `ml-service` adalah la
 
 Visit Deployment Website on: https://chamistry.vercel.app
 
-The mobile APP v.01 version availiable on release
+The mobile APP v.01 version available on release
 
 ## Copyright
 
